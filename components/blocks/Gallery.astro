@@ -1,0 +1,32 @@
+---
+// Gallery: a grid of images. Each links to the full-size version.
+import { Picture, getImage } from 'astro:assets';
+const { block } = Astro.props;
+const items = await Promise.all(
+  block.images.map(async (item) => ({
+    ...item,
+    full: await getImage({ src: item.image, width: Math.min(item.image.width, 2000), format: 'webp' }),
+  })),
+);
+---
+
+<ul class="gallery">
+  {
+    items.map((item) => (
+      <li>
+        <figure>
+          <a href={item.full.src}>
+            <Picture
+              src={item.image}
+              alt={item.alt}
+              formats={['avif', 'webp']}
+              widths={[300, 600].filter((w) => w <= item.image.width).concat([Math.min(item.image.width, 600)])}
+              sizes="(max-width: 600px) 50vw, 300px"
+            />
+          </a>
+          {item.caption && <figcaption>{item.caption}</figcaption>}
+        </figure>
+      </li>
+    ))
+  }
+</ul>

@@ -1,0 +1,65 @@
+---
+// Every page on a club site is built by this one file.
+// content/pages/home.md becomes "/", content/pages/mt-buller.md becomes "/mt-buller/".
+
+import { getCollection } from 'astro:content';
+import Base from '../components/Base.astro';
+import Blocks from '../components/Blocks.astro';
+import Markdown from '../components/Markdown.astro';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('pages', (p) => !p.data.hidden);
+  if (!pages.some((p) => p.id === 'home')) {
+    throw new Error('There is no home page. content/pages/home.md must exist and must not be hidden.');
+  }
+  return pages.map((page) => ({
+    params: { slug: page.id === 'home' ? undefined : page.id },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props;
+const d = page.data;
+const isHome = page.id === 'home';
+---
+
+<Base title={isHome ? undefined : d.title} description={d.description} banners={d.banners} bannerHeight={d.bannerHeight}>
+  {
+    d.layout === 'home' && (
+      <div class="container layout-home">
+        <section class="home-intro">
+          <h1>{d.title}</h1>
+          <Markdown source={page.body} />
+        </section>
+        <div class="home-blocks">
+          <Blocks blocks={d.blocks} />
+        </div>
+      </div>
+    )
+  }
+  {
+    d.layout === 'standard' && (
+      <div class="container layout-standard">
+        <h1>{d.title}</h1>
+        <Markdown source={page.body} class="lead-text" />
+        <Blocks blocks={d.blocks} />
+      </div>
+    )
+  }
+  {
+    d.layout === 'sidebar' && (
+      <div class="container layout-sidebar">
+        <div class="main-column">
+          <h1>{d.title}</h1>
+          <Markdown source={page.body} />
+          <Blocks blocks={d.blocks} />
+        </div>
+        {d.sidebar.length > 0 && (
+          <aside class="side-column" aria-label="More information">
+            <Blocks blocks={d.sidebar} compact />
+          </aside>
+        )}
+      </div>
+    )
+  }
+</Base>

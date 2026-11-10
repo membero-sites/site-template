@@ -1,0 +1,7 @@
+---
+// Text block: formatted text (Markdown).
+import Markdown from '../Markdown.astro';
+const { block } = Astro.props;
+---
+
+<Markdown source={block.body} />

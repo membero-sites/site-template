@@ -1,0 +1,16 @@
+---
+// Image block: one image with optional caption.
+import { Picture } from 'astro:assets';
+const { block, compact } = Astro.props;
+---
+
+<figure class="figure">
+  <Picture
+    src={block.image}
+    alt={block.alt}
+    formats={['avif', 'webp']}
+    widths={[400, 800, 1200].filter((w) => w <= block.image.width).concat([Math.min(block.image.width, 1200)])}
+    sizes={compact ? '(max-width: 900px) 100vw, 400px' : '(max-width: 1200px) 100vw, 1200px'}
+  />
+  {block.caption && <figcaption>{block.caption}</figcaption>}
+</figure>

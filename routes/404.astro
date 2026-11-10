@@ -1,0 +1,13 @@
+---
+// Shown for any address that doesn't exist. Hosting must rewrite unknown
+// paths to /404.html with status 404 (see the runbook).
+import Base from '../components/Base.astro';
+---
+
+<Base title="Page not found" noindex>
+  <div class="container layout-standard">
+    <h1>Page not found</h1>
+    <p>Sorry, that page doesn't exist. It may have moved when the website was updated.</p>
+    <p><a class="button" href="/">Go to the home page</a></p>
+  </div>
+</Base>

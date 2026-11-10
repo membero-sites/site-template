@@ -70,6 +70,6 @@ News, weather, member login on the website, contact forms, KPSC (separate spec).
 7. White footer logo OK
 8. Booking service Documents page URL for the `/documentation` redirect (Josh or Kevin)
 
-## Risk
+## Risk (resolved)
 
-Pages CMS support for mixed block lists within one page to be confirmed in stage 3. Fallback: fixed sections per layout.
+Pages CMS supports mixed block lists within one page (block field, `blockKey: type`). Confirmed in stage 3.

@@ -1,0 +1,48 @@
+---
+// Site header: logo, main menu and the optional header button
+// (usually the booking service link). On phones the menu collapses behind
+// a Menu button. Without JavaScript the menu simply stays open.
+
+import { getEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import { isExternal, samePath } from '../lib/links.mjs';
+
+const { data: s } = await getEntry('settings', 'site');
+const here = Astro.url.pathname;
+const btn = s.headerButton;
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
+      <Image src={s.logoOnLight} alt={`${s.name} home`} height={64} densities={[1, 2]} loading="eager" />
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span class="menu-icon" aria-hidden="true"></span>
+      Menu
+    </button>
+    <nav id="site-nav" class="site-nav" aria-label="Main">
+      <ul>
+        {
+          s.menu.map((item) => (
+            <li>
+              <a
+                href={item.link}
+                aria-current={!isExternal(item.link) && samePath(item.link, here) ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      {
+        btn.show && btn.label && btn.link && (
+          <a class="button header-button" href={btn.link}>
+            {btn.label}
+          </a>
+        )
+      }
+    </nav>
+  </div>
+</header>

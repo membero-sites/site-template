@@ -1,0 +1,21 @@
+# AWS Amplify build settings. Same for every club; managed by the template.
+# Node is pinned to an exact version here, in .nvmrc and in package.json.
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm install 24.22.2
+        - nvm use 24.22.2
+        - node --version
+        # Installs exactly what package-lock.json lists. Fails if they differ.
+        - npm ci
+    build:
+      commands:
+        # Builds the site, then fails the build if any internal link is broken.
+        # A failed build leaves the last good version live.
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'

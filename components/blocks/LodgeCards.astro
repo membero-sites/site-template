@@ -1,0 +1,34 @@
+---
+// Lodge cards: a photo, title, short text and a link for each lodge.
+// Also works for any set of 2 to 4 linked cards.
+import { Picture } from 'astro:assets';
+import Markdown from '../Markdown.astro';
+const { block } = Astro.props;
+---
+
+<ul class="cards">
+  {
+    block.cards.map((card) => (
+      <li class="card">
+        {card.image && (
+          <Picture
+            src={card.image}
+            alt={card.alt ?? ''}
+            formats={['avif', 'webp']}
+            widths={[400, 700].filter((w) => w <= card.image.width).concat([Math.min(card.image.width, 700)])}
+            sizes="(max-width: 700px) 100vw, 400px"
+          />
+        )}
+        <div class="card-body">
+          <h3>{card.title}</h3>
+          <Markdown source={card.body} />
+          {card.link && (
+            <a class="card-link" href={card.link}>
+              {card.linkLabel ?? `More about ${card.title}`}
+            </a>
+          )}
+        </div>
+      </li>
+    ))
+  }
+</ul>

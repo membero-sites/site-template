@@ -1,0 +1,16 @@
+---
+// FAQ: questions that open to show the answer. No JavaScript needed.
+import Markdown from '../Markdown.astro';
+const { block } = Astro.props;
+---
+
+<div class="faq">
+  {
+    block.items.map((item) => (
+      <details>
+        <summary>{item.question}</summary>
+        <Markdown source={item.answer} />
+      </details>
+    ))
+  }
+</div>

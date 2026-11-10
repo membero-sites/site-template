@@ -1,0 +1,26 @@
+---
+// Snow cams: every camera switched on in content/settings/snowcams.json.
+// The browser reloads each image every 5 minutes (scripts/site.js). Images
+// come from our S3/CloudFront camera host, which is in the page's CSP.
+import { getEntry } from 'astro:content';
+const { data } = await getEntry('snowcams', 'snowcams');
+const cams = data.cameras.filter((c) => c.enabled);
+---
+
+{
+  cams.length === 0 ? (
+    <p>No snow cameras are live at the moment.</p>
+  ) : (
+    <ul class="snowcams">
+      {cams.map((cam) => (
+        <li>
+          <figure>
+            <h3>{cam.name}</h3>
+            <img src={cam.url} data-snowcam alt={`Latest snow camera image: ${cam.name}`} width="1280" height="720" loading="lazy" decoding="async" />
+            <figcaption>{cam.caption ?? 'Updates about every 10 minutes.'}</figcaption>
+          </figure>
+        </li>
+      ))}
+    </ul>
+  )
+}

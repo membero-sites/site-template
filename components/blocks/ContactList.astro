@@ -1,0 +1,27 @@
+---
+// Contact list: who to contact for what.
+const { block } = Astro.props;
+const tel = (p) => `tel:${p.replace(/\s+/g, '')}`;
+---
+
+<ul class="contact-list">
+  {
+    block.items.map((item) => (
+      <li>
+        <h3>{item.role}</h3>
+        {item.name && <p>{item.name}</p>}
+        {item.email && (
+          <p>
+            <a href={`mailto:${item.email}`}>{item.email}</a>
+          </p>
+        )}
+        {item.phone && (
+          <p>
+            <a href={tel(item.phone)}>{item.phone}</a>
+          </p>
+        )}
+        {item.note && <p class="note">{item.note}</p>}
+      </li>
+    ))
+  }
+</ul>

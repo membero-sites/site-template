@@ -1,0 +1,360 @@
+# Pages CMS configuration: what editors see and can change.
+# Same for every club; managed by the template. Keep it in step with the
+# template's content.mjs schemas (field names and types must match).
+#
+# Images are saved in media/ and written into content as ../../media/<file>,
+# which is how the template finds and optimises them.
+
+media:
+  input: media
+  output: ../../media
+  rename: safe
+  extensions: [jpg, jpeg, png, webp]
+
+components:
+  # ---------- Shared pieces ----------
+  linkItem:
+    type: object
+    fields:
+      - name: label
+        label: Label
+        type: string
+        required: true
+      - name: link
+        label: Link
+        type: string
+        required: true
+        description: A page like /about, or a full address like https://bookings.example.com.au
+
+  # ---------- Page blocks ----------
+  text:
+    type: object
+    label: Text
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
+
+  image:
+    type: object
+    label: Image
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - { name: image, label: Image, type: image, required: true }
+      - name: alt
+        label: Image description
+        type: string
+        required: true
+        description: Describe the photo for people using screen readers, for example "Mt Buller lodge in winter"
+      - { name: caption, label: Caption (optional), type: string }
+
+  imageText:
+    type: object
+    label: Image with text
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - { name: image, label: Image, type: image, required: true }
+      - { name: alt, label: Image description, type: string, required: true }
+      - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
+      - name: imagePosition
+        label: Image side
+        type: select
+        default: left
+        options:
+          values:
+            - { name: left, label: Left }
+            - { name: right, label: Right }
+
+  gallery:
+    type: object
+    label: Gallery
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - name: images
+        label: Photos
+        type: object
+        list: true
+        fields:
+          - { name: image, label: Image, type: image, required: true }
+          - { name: alt, label: Image description, type: string, required: true }
+          - { name: caption, label: Caption (optional), type: string }
+
+  lodgeCards:
+    type: object
+    label: Lodge cards
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - name: cards
+        label: Cards
+        type: object
+        list: true
+        fields:
+          - { name: title, label: Title, type: string, required: true }
+          - { name: image, label: Image, type: image }
+          - { name: alt, label: Image description, type: string }
+          - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
+          - { name: link, label: Link, type: string, description: For example /mt-buller }
+          - { name: linkLabel, label: Link text (optional), type: string }
+
+  cta:
+    type: object
+    label: Call to action
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
+      - { name: buttonLabel, label: Button text, type: string, required: true }
+      - { name: buttonLink, label: Button link, type: string, required: true }
+
+  map:
+    type: object
+    label: Map
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - { name: name, label: Place name (optional), type: string }
+      - { name: address, label: Address, type: text, required: true }
+      - name: latitude
+        label: Latitude (optional)
+        type: number
+        description: Right-click the spot in Google Maps and click the numbers to copy them. The first number is latitude.
+      - { name: longitude, label: Longitude (optional), type: number, description: The second number. }
+      - { name: zoom, label: Zoom (10 to 19), type: number, default: 16 }
+
+  video:
+    type: object
+    label: Video
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - { name: url, label: YouTube or Vimeo address, type: string, required: true }
+      - { name: title, label: Video title, type: string, required: true }
+
+  faq:
+    type: object
+    label: Questions and answers
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - name: items
+        label: Questions
+        type: object
+        list: true
+        fields:
+          - { name: question, label: Question, type: string, required: true }
+          - { name: answer, label: Answer, type: rich-text, required: true, options: { format: markdown, media: false } }
+
+  tariffTable:
+    type: object
+    label: Tariff table
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - { name: caption, label: Table title (optional), type: string }
+      - { name: columns, label: Column headings, type: string, list: true, required: true }
+      - name: rows
+        label: Rows
+        type: object
+        list: true
+        fields:
+          - { name: cells, label: Cells (one per column), type: string, list: true }
+      - { name: note, label: Note under the table (optional), type: text }
+
+  embed:
+    type: object
+    label: Embed (Google Form, YouTube, Vimeo, OpenStreetMap)
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - name: url
+        label: Address
+        type: string
+        required: true
+        description: For a Google Form, open the form, choose Send, then the <> tab, and copy the docs.google.com address
+      - { name: title, label: Title, type: string, required: true }
+      - { name: height, label: Height in pixels, type: number, default: 800 }
+
+  contactList:
+    type: object
+    label: Contact list
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - name: items
+        label: Contacts
+        type: object
+        list: true
+        fields:
+          - { name: role, label: Role or topic, type: string, required: true }
+          - { name: name, label: Name (optional), type: string }
+          - { name: email, label: Email (optional), type: string }
+          - { name: phone, label: Phone (optional), type: string }
+          - { name: note, label: Note (optional), type: string }
+
+  snowCams:
+    type: object
+    label: Snow cams
+    fields:
+      - name: heading
+        label: Heading (optional)
+        type: string
+        description: Shows every camera switched on under Snow cams in the menu on the left
+
+  blocks:
+    type: block
+    list: true
+    blockKey: type
+    blocks:
+      - { name: text, label: Text, component: text }
+      - { name: imageText, label: Image with text, component: imageText }
+      - { name: image, label: Image, component: image }
+      - { name: gallery, label: Gallery, component: gallery }
+      - { name: lodgeCards, label: Lodge cards, component: lodgeCards }
+      - { name: cta, label: Call to action, component: cta }
+      - { name: map, label: Map, component: map }
+      - { name: video, label: Video, component: video }
+      - { name: faq, label: Questions and answers, component: faq }
+      - { name: tariffTable, label: Tariff table, component: tariffTable }
+      - { name: embed, label: Embed, component: embed }
+      - { name: contactList, label: Contact list, component: contactList }
+      - { name: snowCams, label: Snow cams, component: snowCams }
+
+content:
+  # ---------- Pages ----------
+  - name: pages
+    label: Pages
+    type: collection
+    path: content/pages
+    format: yaml-frontmatter
+    filename: '{primary}.md'
+    subfolders: false
+    view:
+      primary: title
+      fields: [title, layout]
+    fields:
+      - { name: title, label: Page title, type: string, required: true }
+      - name: layout
+        label: Layout
+        type: select
+        default: standard
+        options:
+          values:
+            - { name: standard, label: Standard (full width) }
+            - { name: sidebar, label: Main plus sidebar }
+            - { name: home, label: Home (intro plus blocks) }
+      - name: description
+        label: Search description (optional)
+        type: text
+        description: One or two sentences shown in Google results
+      - name: banners
+        label: Banner photos
+        type: image
+        description: Up to 7 wide photos. More than one fades in turn.
+        options:
+          multiple: { max: 7 }
+      - name: bannerHeight
+        label: Banner height
+        type: select
+        default: standard
+        options:
+          values:
+            - { name: standard, label: Standard }
+            - { name: short, label: Short (better for low-resolution photos) }
+      - name: body
+        label: Intro text
+        type: rich-text
+        options: { format: markdown, media: false }
+      - { name: blocks, label: Page sections, component: blocks }
+      - name: sidebar
+        label: Sidebar sections
+        component: blocks
+        description: Only shown with the Main plus sidebar layout
+      - name: hidden
+        label: Hide this page
+        type: boolean
+        default: false
+        description: Hidden pages are not published. Remove any menu link to them first.
+
+  # ---------- Site settings ----------
+  - name: site
+    label: Site settings
+    type: file
+    path: content/settings/site.json
+    format: json
+    fields:
+      - { name: name, label: Club name, type: string, required: true }
+      - { name: url, label: Website address, type: string, required: true, readonly: true }
+      - { name: description, label: Search description, type: text }
+      - { name: logoOnLight, label: Logo for white backgrounds (header), type: image, required: true }
+      - { name: logoOnDark, label: Logo for dark backgrounds (footer), type: image }
+      - { name: icon, label: Square icon (browser tab), type: image }
+      - name: colours
+        label: Colours
+        type: object
+        description: Text colours are checked for readability. If one is too light the site won't update and you'll see why.
+        fields:
+          - { name: primary, label: Links and buttons, type: string, required: true }
+          - { name: heading, label: Headings and menu, type: string, required: true }
+          - { name: text, label: Body text, type: string, required: true }
+          - { name: accent, label: Accent lines, type: string, required: true }
+          - { name: dark, label: Footer background, type: string, required: true }
+      - name: fonts
+        label: Fonts
+        type: select
+        options:
+          values:
+            - { name: montserrat-source-sans, label: Montserrat headings with Source Sans text }
+            - { name: inter, label: Inter throughout }
+            - { name: lora-source-sans, label: Lora headings with Source Sans text }
+            - { name: montserrat-inter, label: Montserrat headings with Inter text }
+            - { name: system, label: Device fonts (fastest) }
+      - { name: menu, label: Menu, component: linkItem, list: true, required: true }
+      - name: headerButton
+        label: Header button
+        type: object
+        fields:
+          - { name: show, label: Show button, type: boolean }
+          - { name: label, label: Button text, type: string }
+          - { name: link, label: Button link, type: string }
+      - name: contact
+        label: Contact details
+        type: object
+        fields:
+          - { name: email, label: Email, type: string }
+          - { name: phone, label: Phone, type: string }
+          - { name: postalAddress, label: Postal address, type: text }
+          - { name: abn, label: ABN, type: string }
+      - name: social
+        label: Social media
+        type: object
+        list: true
+        fields:
+          - name: platform
+            label: Platform
+            type: select
+            required: true
+            options:
+              values:
+                - { name: facebook, label: Facebook }
+                - { name: instagram, label: Instagram }
+                - { name: x, label: X (Twitter) }
+                - { name: youtube, label: YouTube }
+                - { name: linkedin, label: LinkedIn }
+          - { name: url, label: Address, type: string, required: true }
+      - name: footer
+        label: Footer
+        type: object
+        fields:
+          - { name: showContact, label: Show contact details, type: boolean }
+          - { name: showSocial, label: Show social media, type: boolean }
+          - { name: text, label: Footer text, type: rich-text, options: { format: markdown, media: false } }
+          - { name: links, label: Footer links, component: linkItem, list: true }
+
+  # ---------- Snow cams ----------
+  - name: snowcams
+    label: Snow cams
+    type: file
+    path: content/settings/snowcams.json
+    format: json
+    fields:
+      - name: cameras
+        label: Cameras
+        type: object
+        list: true
+        fields:
+          - { name: name, label: Camera name, type: string, required: true }
+          - { name: url, label: Image address, type: string, required: true, readonly: true }
+          - { name: enabled, label: Show on the website, type: boolean }
+          - { name: caption, label: Caption (optional), type: string }

@@ -1,0 +1,64 @@
+---
+// The page shell: <head>, header, banner, main content, footer.
+
+import { getEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import Banner from './Banner.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string; // page title; omitted on the home page
+  description?: string;
+  banners?: ImageMetadata[];
+  bannerHeight?: 'standard' | 'short';
+  noindex?: boolean;
+}
+
+const { title, description, banners = [], bannerHeight = 'standard', noindex = false } = Astro.props;
+const { data: s } = await getEntry('settings', 'site');
+
+const fullTitle = title ? `${title} | ${s.name}` : s.name;
+const metaDescription = description ?? s.description;
+const canonical = new URL(Astro.url.pathname, s.url).toString();
+// Preview sites (no SITE_INDEXING=on) are kept out of search results.
+const blockIndexing = noindex || process.env.SITE_INDEXING !== 'on';
+
+// Browser tab and home-screen icons, generated from the club's square icon
+// (or the logo, padded to a square, if there's no icon).
+const iconSource = s.icon ?? s.logoOnLight;
+const iconOpts = { src: iconSource, format: 'png', fit: 'contain', background: '#ffffff' } as const;
+const icon32 = await getImage({ ...iconOpts, width: 32, height: 32 });
+const icon180 = await getImage({ ...iconOpts, width: 180, height: 180 });
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    {metaDescription && <meta name="description" content={metaDescription} />}
+    <link rel="canonical" href={canonical} />
+    {blockIndexing && <meta name="robots" content="noindex" />}
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:site_name" content={s.name} />
+    {metaDescription && <meta property="og:description" content={metaDescription} />}
+    <link rel="icon" type="image/png" sizes="32x32" href={icon32.src} />
+    <link rel="apple-touch-icon" href={icon180.src} />
+    <link rel="stylesheet" href="/theme.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header />
+    {banners.length > 0 && <Banner images={banners} height={bannerHeight} />}
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    <script>
+      import '../scripts/site.js';
+    </script>
+  </body>
+</html>

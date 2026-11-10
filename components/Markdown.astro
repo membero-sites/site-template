@@ -1,0 +1,15 @@
+---
+// Renders editor Markdown. Raw HTML and Markdown images are removed
+// (see lib/markdown.mjs).
+
+import { renderMarkdown } from '../lib/markdown.mjs';
+
+interface Props {
+  source?: string;
+  class?: string;
+}
+const { source, class: className } = Astro.props;
+const html = renderMarkdown(source?.trim());
+---
+
+{html && <div class:list={['prose', className]} set:html={html} />}

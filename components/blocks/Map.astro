@@ -1,0 +1,25 @@
+---
+// Map: address, Directions link and (if coordinates are given) an
+// OpenStreetMap map. No API key and no tracking cookies.
+import { osmEmbedUrl, directionsUrl } from '../../lib/embeds.mjs';
+const { block } = Astro.props;
+const hasCoords = typeof block.latitude === 'number' && typeof block.longitude === 'number';
+---
+
+<div class="map">
+  {
+    hasCoords && (
+      <iframe
+        src={osmEmbedUrl(block.latitude, block.longitude, block.zoom)}
+        title={`Map showing ${block.name ?? block.address}`}
+        loading="lazy"
+        referrerpolicy="no-referrer"
+      />
+    )
+  }
+  <address>
+    {block.name && <strong>{block.name}</strong>}
+    <span class="pre-line">{block.address}</span>
+  </address>
+  <a class="map-link" href={directionsUrl(block.address)}>Get directions</a>
+</div>

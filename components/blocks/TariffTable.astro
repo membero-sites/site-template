@@ -1,0 +1,27 @@
+---
+// Tariff table: column headings and rows of cells. Scrolls sideways on
+// narrow phones rather than squashing.
+import Markdown from '../Markdown.astro';
+const { block } = Astro.props;
+---
+
+<div class="table-wrap" role="region" aria-label={block.caption ?? block.heading ?? 'Table'} tabindex="0">
+  <table>
+    {block.caption && <caption>{block.caption}</caption>}
+    <thead>
+      <tr>{block.columns.map((c) => <th scope="col">{c}</th>)}</tr>
+    </thead>
+    <tbody>
+      {
+        block.rows.map((row) => (
+          <tr>
+            {block.columns.map((_, i) =>
+              i === 0 ? <th scope="row">{row.cells[i] ?? ''}</th> : <td>{row.cells[i] ?? ''}</td>,
+            )}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+{block.note && <Markdown source={block.note} class="table-note" />}

@@ -1,0 +1,10 @@
+---
+// Call to action: short text and one button.
+import Markdown from '../Markdown.astro';
+const { block } = Astro.props;
+---
+
+<div class="cta">
+  <Markdown source={block.body} />
+  <a class="button" href={block.buttonLink}>{block.buttonLabel}</a>
+</div>

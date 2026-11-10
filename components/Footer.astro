@@ -1,0 +1,86 @@
+---
+// Site footer on the club's dark colour: logo, short text, contact details,
+// extra links and social links. The copyright line has no year on purpose:
+// nothing on the site may depend on the build date.
+
+import { getEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import Markdown from './Markdown.astro';
+import SocialIcon from './SocialIcon.astro';
+
+const { data: s } = await getEntry('settings', 'site');
+const f = s.footer;
+const c = s.contact;
+const hasContact = f.showContact && (c.email || c.phone || c.postalAddress || c.abn);
+const hasSocial = f.showSocial && s.social.length > 0;
+const SOCIAL_NAMES = { facebook: 'Facebook', instagram: 'Instagram', x: 'X (Twitter)', youtube: 'YouTube', linkedin: 'LinkedIn' };
+---
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-about">
+      {
+        s.logoOnDark ? (
+          <Image src={s.logoOnDark} alt={s.name} height={72} densities={[1, 2]} class="footer-logo" />
+        ) : (
+          <p class="footer-name">{s.name}</p>
+        )
+      }
+      {f.text && <Markdown source={f.text} />}
+    </div>
+
+    {
+      hasContact && (
+        <div class="footer-contact">
+          <h2>Contact</h2>
+          {c.postalAddress && <p class="pre-line">{c.postalAddress}</p>}
+          {c.email && (
+            <p>
+              <a href={`mailto:${c.email}`}>{c.email}</a>
+            </p>
+          )}
+          {c.phone && (
+            <p>
+              <a href={`tel:${c.phone.replace(/\s+/g, '')}`}>{c.phone}</a>
+            </p>
+          )}
+          {c.abn && <p>ABN {c.abn}</p>}
+        </div>
+      )
+    }
+
+    {
+      (f.links.length > 0 || hasSocial) && (
+        <div class="footer-links">
+          {f.links.length > 0 && (
+            <>
+              <h2>Links</h2>
+              <ul>
+                {f.links.map((l) => (
+                  <li>
+                    <a href={l.link}>{l.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {hasSocial && (
+            <ul class="social" aria-label="Social media">
+              {s.social.map((item) => (
+                <li>
+                  <a href={item.url} aria-label={SOCIAL_NAMES[item.platform]}>
+                    <SocialIcon platform={item.platform} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )
+    }
+  </div>
+  <div class="container footer-bottom">
+    <p>&copy; {s.name}</p>
+    <p><a href="https://www.getmembero.com">Website by Membero</a></p>
+  </div>
+</footer>

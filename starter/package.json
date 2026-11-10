@@ -1,0 +1,16 @@
+{
+  "name": "club-site",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.22.2"
+  },
+  "scripts": {
+    "build": "astro build && membero-check-links dist",
+    "dev": "astro dev",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@membero/site-template": "git+https://github.com/membero-sites/site-template.git#v2026.1"
+  }
+}

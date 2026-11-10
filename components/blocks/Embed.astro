@@ -1,0 +1,16 @@
+---
+// Embed: an allowlisted third-party page (for example a Google Form).
+// The schema rejects any host not in lib/embeds.mjs.
+import { embedSrc } from '../../lib/embeds.mjs';
+const { block } = Astro.props;
+---
+
+<div class="embed">
+  <iframe
+    src={embedSrc(block.url)}
+    title={block.title}
+    height={block.height}
+    loading="lazy"
+    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <p class="embed-fallback"><a href={block.url}>Open {block.title} in a new page</a></p>
+</div>

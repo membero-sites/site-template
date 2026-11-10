@@ -1,0 +1,14 @@
+---
+// Video: YouTube (privacy-enhanced mode) or Vimeo (do-not-track).
+import { videoEmbedUrl } from '../../lib/embeds.mjs';
+const { block } = Astro.props;
+---
+
+<div class="video">
+  <iframe
+    src={videoEmbedUrl(block.url)}
+    title={block.title}
+    loading="lazy"
+    allow="fullscreen; picture-in-picture"
+    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+</div>
