@@ -11,6 +11,6 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@membero/site-template": "git+https://github.com/membero-sites/site-template.git#v2026.1"
+    "@membero/site-template": "https://github.com/membero-sites/site-template/archive/refs/tags/v2026.1.tar.gz"
   }
 }
