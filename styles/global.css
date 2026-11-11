@@ -598,6 +598,11 @@ main:focus {
 }
 
 @media (max-width: 700px) {
+  /* Medium photos with text and buttons need more room on phones. */
+  .hero-medium.hero-has-text {
+    height: clamp(380px, 100vw, 460px);
+  }
+
   .hero-large .slider-controls,
   .hero-medium .slider-controls {
     top: auto;

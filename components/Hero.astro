@@ -34,6 +34,7 @@ const { hero, pageTitle } = Astro.props;
 const { style, images, text, buttons } = hero;
 const title = hero.title ?? pageTitle;
 const slider = images.length > 1 && style !== 'split';
+const hasText = Boolean(text) || buttons.length > 0;
 
 // Responsive widths: never ask for a size bigger than the original.
 const widthsFor = (img: ImageMetadata, list: number[]) => {
@@ -76,7 +77,7 @@ const widthsFor = (img: ImageMetadata, list: number[]) => {
 
 {
   (style === 'large' || style === 'medium' || style === 'small') && (
-    <section class:list={['hero', `hero-${style}`]} data-slideshow={slider ? '' : undefined} aria-label={slider ? 'Photos' : undefined}>
+    <section class:list={['hero', `hero-${style}`, { 'hero-has-text': hasText }]} data-slideshow={slider ? '' : undefined} aria-label={slider ? 'Photos' : undefined}>
       <div class="hero-slides">
         {images.map((img, i) => (
           <div class:list={['slide', { 'is-active': i === 0 }]}>
