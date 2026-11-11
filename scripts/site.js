@@ -1,7 +1,7 @@
 // All browser-side JavaScript for club sites. Kept small on purpose and
 // written here rather than pulled from third-party libraries.
 // Everything still works without JavaScript: the menu stays open, the
-// banner shows its first image and snow cams show the image from page load.
+// top of the page shows its first photo and snow cams show the image from page load.
 
 // ---------- Phone menu ----------
 // The Menu button shows and hides the main menu on narrow screens.
@@ -15,38 +15,51 @@ if (toggle && nav) {
   });
 }
 
-// ---------- Banner slideshow ----------
-// Fades to the next image every 6 seconds. Does nothing if the visitor has
-// asked their device to reduce motion. The pause button stops and restarts.
+// ---------- Photo slider (top of page) ----------
+// Fades to the next photo every 6 seconds. Dots jump to a photo; the pause
+// button stops and restarts. Does nothing if the visitor has asked their
+// device to reduce motion (they see the first photo only).
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const INTERVAL_MS = 6000;
 
 for (const show of document.querySelectorAll('[data-slideshow]')) {
   const slides = [...show.querySelectorAll('.slide')];
-  const button = show.querySelector('.slideshow-toggle');
-  if (slides.length < 2 || reduceMotion) continue;
+  const controls = show.querySelector('.slider-controls');
+  const dots = [...show.querySelectorAll('.slider-dot')];
+  const pause = show.querySelector('.slider-pause');
+  if (slides.length < 2 || reduceMotion || !controls) continue;
 
   let current = 0;
   let timer = null;
-  const next = () => {
+
+  const showSlide = (n) => {
     slides[current].classList.remove('is-active');
-    current = (current + 1) % slides.length;
+    dots[current]?.setAttribute('aria-pressed', 'false');
+    current = n;
     slides[current].classList.add('is-active');
+    dots[current]?.setAttribute('aria-pressed', 'true');
   };
   const start = () => {
-    timer = window.setInterval(next, INTERVAL_MS);
-    button.setAttribute('aria-pressed', 'false');
-    button.textContent = 'Pause photos';
+    timer = window.setInterval(() => showSlide((current + 1) % slides.length), INTERVAL_MS);
+    pause.setAttribute('aria-pressed', 'false');
+    pause.textContent = 'Pause';
   };
   const stop = () => {
     window.clearInterval(timer);
     timer = null;
-    button.setAttribute('aria-pressed', 'true');
-    button.textContent = 'Play photos';
+    pause.setAttribute('aria-pressed', 'true');
+    pause.textContent = 'Play';
   };
 
-  button.hidden = false;
-  button.addEventListener('click', () => (timer ? stop() : start()));
+  controls.hidden = false;
+  pause.addEventListener('click', () => (timer ? stop() : start()));
+  // Choosing a photo stops the slider so it stays on that photo.
+  dots.forEach((dot, i) =>
+    dot.addEventListener('click', () => {
+      if (timer) stop();
+      showSlide(i);
+    }),
+  );
   start();
 }
 

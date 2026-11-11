@@ -1,0 +1,122 @@
+---
+// The top of a page. Editors choose a style per page:
+//
+//   large   Full-screen photo (or slider) with the title, a line of text and
+//           up to 2 buttons on top. Best for the home page. Needs photos at
+//           least 2000px wide.
+//   medium  Shorter photo (or slider) with the page title on top.
+//   small   A short photo strip. The title sits below. Suits low-resolution
+//           or very wide photos.
+//   split   One photo beside the title, text and buttons. Suits smaller or
+//           portrait photos.
+//   none    No photo. The page renders its own title.
+//
+// More than one photo turns large, medium and small into a slider:
+// photos fade every 6 seconds, with dots and a pause button
+// (scripts/site.js). Reduced-motion visitors see the first photo only.
+// Hero photos are decorative (empty alt text); the title carries meaning.
+
+import { Picture } from 'astro:assets';
+import Markdown from './Markdown.astro';
+
+interface Props {
+  hero: {
+    style: 'large' | 'medium' | 'small' | 'split' | 'none';
+    images: ImageMetadata[];
+    title?: string;
+    text?: string;
+    buttons: { label: string; link: string }[];
+  };
+  pageTitle: string;
+}
+
+const { hero, pageTitle } = Astro.props;
+const { style, images, text, buttons } = hero;
+const title = hero.title ?? pageTitle;
+const slider = images.length > 1 && style !== 'split';
+
+// Responsive widths: never ask for a size bigger than the original.
+const widthsFor = (img: ImageMetadata, list: number[]) => {
+  const fit = list.filter((w) => w < img.width);
+  return [...fit, Math.min(img.width, list[list.length - 1])];
+};
+---
+
+{
+  style === 'split' && (
+    <section class="hero hero-split">
+      <div class="container hero-split-inner">
+        <div class="hero-split-text">
+          <h1>{title}</h1>
+          {text && <Markdown source={text} class="hero-text" />}
+          {buttons.length > 0 && (
+            <p class="hero-buttons">
+              {buttons.map((b, i) => (
+                <a class:list={['button', { 'button-quiet': i > 0 }]} href={b.link}>
+                  {b.label}
+                </a>
+              ))}
+            </p>
+          )}
+        </div>
+        <Picture
+          src={images[0]}
+          alt=""
+          class="hero-split-photo"
+          formats={['avif', 'webp']}
+          widths={widthsFor(images[0], [480, 800, 1200])}
+          sizes="(max-width: 900px) 100vw, 50vw"
+          loading="eager"
+          fetchpriority="high"
+        />
+      </div>
+    </section>
+  )
+}
+
+{
+  (style === 'large' || style === 'medium' || style === 'small') && (
+    <section class:list={['hero', `hero-${style}`]} data-slideshow={slider ? '' : undefined} aria-label={slider ? 'Photos' : undefined}>
+      <div class="hero-slides">
+        {images.map((img, i) => (
+          <div class:list={['slide', { 'is-active': i === 0 }]}>
+            <Picture
+              src={img}
+              alt=""
+              formats={['avif', 'webp']}
+              widths={widthsFor(img, [640, 960, 1280, 1600, 2000, 2560])}
+              sizes="100vw"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              fetchpriority={i === 0 ? 'high' : undefined}
+            />
+          </div>
+        ))}
+      </div>
+      {style !== 'small' && (
+        <div class="container hero-content">
+          <h1>{title}</h1>
+          {text && <Markdown source={text} class="hero-text" />}
+          {buttons.length > 0 && (
+            <p class="hero-buttons">
+              {buttons.map((b, i) => (
+                <a class:list={['button', { 'button-light': i === 0, 'button-outline': i > 0 }]} href={b.link}>
+                  {b.label}
+                </a>
+              ))}
+            </p>
+          )}
+        </div>
+      )}
+      {slider && (
+        <div class="slider-controls" hidden>
+          {images.map((_, i) => (
+            <button type="button" class="slider-dot" data-slide={i} aria-label={`Show photo ${i + 1} of ${images.length}`} aria-pressed={i === 0 ? 'true' : 'false'} />
+          ))}
+          <button type="button" class="slider-pause" aria-pressed="false">
+            Pause
+          </button>
+        </div>
+      )}
+    </section>
+  )
+}

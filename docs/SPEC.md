@@ -1,6 +1,6 @@
-# Club Websites Platform: Spec v1 (Icicles pilot)
+# Club Websites Platform: Spec v1.1 (Icicles pilot)
 
-Approved by Josh, 10 November 2026. Changes to this spec need Josh's approval and a new version number.
+v1 approved by Josh, 10 November 2026. v1.1 (11 November 2026, at Josh's request): more design options so the template suits a wider range of clubs (hero styles, section backgrounds, new blocks, look settings, booking band). Changes to this spec need Josh's approval and a new version number.
 
 ## 1. Purpose
 
@@ -16,16 +16,17 @@ Static websites for ski clubs. Goals, in order: secure, very low maintenance, cl
 
 ## 3. Template
 
-- **Settings**: logo (light and dark), colours, curated self-hosted font pairs (4 to 6, no Google Fonts calls), banner images, menu, contact details, social links, booking and members links, sections on or off.
-- **Blocks**: text, image with text, gallery, lodge cards, call to action, map, video, FAQ, tariff table, embed, contact list, snow cam.
-- **Layouts**: Home (intro plus lodge cards), Standard (full width), Main plus sidebar.
-- **Banner slideshow**: up to 7 images, fade every 6 seconds, pause button, static first image when reduced motion is on, about 1 KB of template JS. One image means no rotation.
+- **Settings**: logo (light and dark), colours, curated self-hosted font pairs (no Google Fonts calls), look (white or see-through header, rounded or square corners), menu, header button, booking band above the footer, contact details, social links, footer.
+- **Top of page (per page)**: large (full-screen photo or slider with title, text and up to 2 buttons), medium (photo with page title), small (short strip, for low-resolution photos), split (one photo beside the title), or none.
+- **Slider**: up to 7 photos, fade every 6 seconds, dots and pause button, first photo only when reduced motion is on. All JS written into the template.
+- **Blocks**: text, image, image with text, full-width photo, gallery, lodge cards (with location), lodge facts, call to action, map, video, FAQ, tariff table, embed, contact list, snow cams. Each block can sit on a white, tint or dark band.
+- **Layouts**: Full width sections, Main plus sidebar.
 - **Map block**: OpenStreetMap embed plus a Directions link. No API key, no tracking cookies.
 - **Embeds**: allowlist only (YouTube, Vimeo, Google Forms, OpenStreetMap). Anything else fails the build.
 - **Members area**: optional section, off by default, reserved for later signed-cookie single sign-on. Every site has a booking/members link into the booking service.
 - **Custom slot**: `custom/` in the club repo, for paid one-offs only. Never fork the template. Anything two clubs want goes into the template.
 - **Security headers**: strict content security policy (self, allowlisted embed hosts, snow cam host), HSTS, nosniff, Referrer-Policy, frame-ancestors none. No forms post anywhere. Contact is by email link.
-- **Accessibility**: WCAG 2.1 AA target. Colour roles are set per club so text always meets contrast.
+- **Accessibility**: WCAG 2.1 AA target. Colour roles are set per club and checked against white and the tint band at build time. Text on photos sits on a dark shade.
 
 ## 4. Builds and dependencies
 
@@ -46,9 +47,9 @@ Amplify console for build status. Email on failed builds. Free uptime monitoring
 
 ## 7. Icicles site
 
-- **Pages**: Home (Home layout). About, Mt Buller, Falls Creek (Main plus sidebar). Membership, Contact (contact list block), Snow Cams (Standard). "Booking & Documentation" is a menu link to https://bookings.icicles.com.au. Cam can add pages with any layout.
+- **Pages**: Home (large slider). About, Mt Buller, Falls Creek (Main plus sidebar, lodge facts in the sidebar). Membership, Contact (contact list block), Snow Cams (full width). "Booking & Documentation" is a menu link to https://bookings.icicles.com.au. Cam can add pages with any layout.
 - **Colours**: links and buttons #2400B0 (12.3:1 on white), headings and nav #1C3956 (11.9:1), body text and footer background #23262A, #51A4DB for accents only (2.7:1 on white, fails as text).
-- **Banners**: cropped to one shape, served as optimised WebP/AVIF. History (1020x267) and Cross-Country (1136x358) are low resolution: shown at a shorter height inside a centred width, brand colour either side on wide screens.
+- **Photos**: served as optimised WebP/AVIF. History (1020x267) and Cross-Country (1136x358) are low resolution: used with the small top style or inside sections, never full screen.
 - **Location**: the 267x240 map screenshots are replaced by the map block with address and Directions link.
 - **Logos**: both supplied logos only work on light backgrounds. Light logo in the white header. A white single-colour version, generated from the logo, in the dark footer (subject to Cam's OK). Favicon sizes generated from the logo. Retro logo in the About sidebar.
 - **Snow cams**: three entries (Falls Creek Lodge, Falls Creek Valley, Mt Buller Summit), each with an on/off switch. Only the live camera is on. Image reloads in the browser every 5 minutes.

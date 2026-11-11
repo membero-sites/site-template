@@ -1,12 +1,13 @@
 ---
-// Lodge cards: a photo, title, short text and a link for each lodge.
-// Also works for any set of 2 to 4 linked cards.
+// Lodge cards: photo, lodge name, where it is, a short description and a
+// link. Also works for any set of 2 to 4 linked cards.
 import { Picture } from 'astro:assets';
 import Markdown from '../Markdown.astro';
 const { block } = Astro.props;
 ---
 
-<ul class="cards">
+{block.intro && <Markdown source={block.intro} class="cards-intro" />}
+<ul class:list={['cards', `cards-${Math.min(block.cards.length, 3)}`]}>
   {
     block.cards.map((card) => (
       <li class="card">
@@ -15,12 +16,13 @@ const { block } = Astro.props;
             src={card.image}
             alt={card.alt ?? ''}
             formats={['avif', 'webp']}
-            widths={[400, 700].filter((w) => w <= card.image.width).concat([Math.min(card.image.width, 700)])}
-            sizes="(max-width: 700px) 100vw, 400px"
+            widths={[400, 700, 1000].filter((w) => w < card.image.width).concat([Math.min(card.image.width, 1000)])}
+            sizes="(max-width: 700px) 100vw, 560px"
           />
         )}
         <div class="card-body">
           <h3>{card.title}</h3>
+          {card.location && <p class="card-location">{card.location}</p>}
           <Markdown source={card.body} />
           {card.link && (
             <a class="card-link" href={card.link}>

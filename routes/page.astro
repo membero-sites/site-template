@@ -1,11 +1,17 @@
 ---
 // Every page on a club site is built by this one file.
 // content/pages/home.md becomes "/", content/pages/mt-buller.md becomes "/mt-buller/".
+//
+// Layouts:
+//   full     intro text, then full-width sections (each can have a
+//            white, tint or dark background)
+//   sidebar  main column plus a narrower sidebar
 
 import { getCollection } from 'astro:content';
 import Base from '../components/Base.astro';
 import Blocks from '../components/Blocks.astro';
 import Markdown from '../components/Markdown.astro';
+import HeroExtras from '../components/HeroExtras.astro';
 
 export async function getStaticPaths() {
   const pages = await getCollection('pages', (p) => !p.data.hidden);
@@ -21,44 +27,46 @@ export async function getStaticPaths() {
 const { page } = Astro.props;
 const d = page.data;
 const isHome = page.id === 'home';
+// Large, medium and split heroes show the page title; otherwise the page does.
+const titleInHero = ['large', 'medium', 'split'].includes(d.hero.style);
+const intro = page.body?.trim();
+// When the title isn't on the photo, the hero's text and buttons go under it.
+const heroExtras = !titleInHero && (d.hero.text || d.hero.buttons.length > 0);
 ---
 
-<Base title={isHome ? undefined : d.title} description={d.description} banners={d.banners} bannerHeight={d.bannerHeight}>
+<Base title={isHome ? undefined : d.title} pageTitle={d.title} description={d.description} hero={d.hero}>
   {
-    d.layout === 'home' && (
-      <div class="container layout-home">
-        <section class="home-intro">
-          <h1>{d.title}</h1>
-          <Markdown source={page.body} />
-        </section>
-        <div class="home-blocks">
-          <Blocks blocks={d.blocks} />
-        </div>
-      </div>
-    )
-  }
-  {
-    d.layout === 'standard' && (
-      <div class="container layout-standard">
-        <h1>{d.title}</h1>
-        <Markdown source={page.body} class="lead-text" />
+    d.layout === 'full' && (
+      <>
+        {(!titleInHero || intro) && (
+          <div class="band band-white page-intro">
+            <div class="container">
+              {!titleInHero && <h1>{d.title}</h1>}
+              {heroExtras && <HeroExtras hero={d.hero} />}
+              {intro && <Markdown source={intro} class="lead" />}
+            </div>
+          </div>
+        )}
         <Blocks blocks={d.blocks} />
-      </div>
+      </>
     )
   }
   {
     d.layout === 'sidebar' && (
-      <div class="container layout-sidebar">
-        <div class="main-column">
-          <h1>{d.title}</h1>
-          <Markdown source={page.body} />
-          <Blocks blocks={d.blocks} />
+      <div class="band band-white">
+        <div class="container layout-sidebar">
+          <div class="main-column">
+            {!titleInHero && <h1>{d.title}</h1>}
+            {heroExtras && <HeroExtras hero={d.hero} />}
+            {intro && <Markdown source={intro} class="lead" />}
+            <Blocks blocks={d.blocks} inColumn />
+          </div>
+          {d.sidebar.length > 0 && (
+            <aside class="side-column" aria-label="More information">
+              <Blocks blocks={d.sidebar} inColumn compact />
+            </aside>
+          )}
         </div>
-        {d.sidebar.length > 0 && (
-          <aside class="side-column" aria-label="More information">
-            <Blocks blocks={d.sidebar} compact />
-          </aside>
-        )}
       </div>
     )
   }

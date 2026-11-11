@@ -16,6 +16,7 @@ export async function GET() {
   --c-dark: ${s.colours.dark};
   --font-heading: ${fonts.heading};
   --font-body: ${fonts.body};
+  --radius: ${s.look.corners === 'square' ? '0' : '10px'};
 }
 `;
   return new Response(css, { headers: { 'Content-Type': 'text/css; charset=utf-8' } });

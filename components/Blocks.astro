@@ -1,12 +1,18 @@
 ---
-// Renders a list of page blocks. Each block type has its own component in
-// ./blocks. "compact" is used in the sidebar (single narrow column).
+// Renders a list of page blocks.
+//
+// In the full-width layout each block is a band across the page with its
+// own background (white, tint or dark). In the sidebar layout ("inColumn")
+// blocks stack inside the column and backgrounds are ignored. "compact" is
+// the narrow sidebar itself.
 
 import Text from './blocks/Text.astro';
 import SingleImage from './blocks/SingleImage.astro';
 import ImageText from './blocks/ImageText.astro';
+import Photo from './blocks/Photo.astro';
 import Gallery from './blocks/Gallery.astro';
 import LodgeCards from './blocks/LodgeCards.astro';
+import Facts from './blocks/Facts.astro';
 import Cta from './blocks/Cta.astro';
 import MapBlock from './blocks/Map.astro';
 import Video from './blocks/Video.astro';
@@ -18,16 +24,19 @@ import SnowCams from './blocks/SnowCams.astro';
 
 interface Props {
   blocks: any[];
+  inColumn?: boolean;
   compact?: boolean;
 }
-const { blocks, compact = false } = Astro.props;
+const { blocks, inColumn = false, compact = false } = Astro.props;
 
 const COMPONENTS = {
   text: Text,
   image: SingleImage,
   imageText: ImageText,
+  photo: Photo,
   gallery: Gallery,
   lodgeCards: LodgeCards,
+  facts: Facts,
   cta: Cta,
   map: MapBlock,
   video: Video,
@@ -37,6 +46,12 @@ const COMPONENTS = {
   contactList: ContactList,
   snowCams: SnowCams,
 };
+
+// Blocks that place their own heading (beside an image, not above it).
+const OWN_HEADING = new Set(['imageText']);
+
+// Blocks whose text should stay at a readable line length.
+const NARROW = new Set(['text', 'faq', 'cta', 'map', 'video', 'facts']);
 
 // Paid one-off components live in the club repo's custom/ folder.
 const customComponents = import.meta.glob('/custom/*.astro', { eager: true });
@@ -50,10 +65,29 @@ function customFor(name) {
 {
   blocks.map((block) => {
     const Component = block.type === 'custom' ? customFor(block.name) : COMPONENTS[block.type];
+    const fullBleed = block.type === 'photo' && !inColumn;
+
+    if (inColumn) {
+      return (
+        <section class:list={['block', `block-${block.type}`, { compact }]}>
+          {block.heading && !OWN_HEADING.has(block.type) && <h2>{block.heading}</h2>}
+          <Component block={block} compact={compact} inColumn />
+        </section>
+      );
+    }
+    if (fullBleed) {
+      return (
+        <section class="band band-photo">
+          <Component block={block} />
+        </section>
+      );
+    }
     return (
-      <section class:list={['block', `block-${block.type}`, { compact }]}>
-        {block.heading && <h2>{block.heading}</h2>}
-        <Component block={block} compact={compact} />
+      <section class:list={['band', `band-${block.background}`, `block-${block.type}`]}>
+        <div class:list={['container', { measure: NARROW.has(block.type) }]}>
+          {block.heading && !OWN_HEADING.has(block.type) && <h2>{block.heading}</h2>}
+          <Component block={block} />
+        </div>
       </section>
     );
   })

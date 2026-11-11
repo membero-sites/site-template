@@ -26,12 +26,24 @@ components:
         required: true
         description: A page like /about, or a full address like https://bookings.example.com.au
 
+  background:
+    type: select
+    label: Background
+    default: white
+    description: Ignored in the sidebar
+    options:
+      values:
+        - { name: white, label: White }
+        - { name: tint, label: Light tint }
+        - { name: dark, label: Dark (club colour) }
+
   # ---------- Page blocks ----------
   text:
     type: object
     label: Text
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
 
   image:
@@ -39,6 +51,7 @@ components:
     label: Image
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - { name: image, label: Image, type: image, required: true }
       - name: alt
         label: Image description
@@ -52,6 +65,7 @@ components:
     label: Image with text
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - { name: image, label: Image, type: image, required: true }
       - { name: alt, label: Image description, type: string, required: true }
       - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
@@ -63,12 +77,45 @@ components:
           values:
             - { name: left, label: Left }
             - { name: right, label: Right }
+      - { name: buttonLabel, label: Button text (optional), type: string }
+      - { name: buttonLink, label: Button link (optional), type: string }
+
+  photo:
+    type: object
+    label: Full-width photo
+    fields:
+      - { name: image, label: Photo, type: image, required: true, description: "Use a large photo, at least 2000 pixels wide" }
+      - { name: alt, label: Image description, type: string, required: true }
+      - { name: caption, label: Caption (optional), type: string }
+      - name: height
+        label: Height
+        type: select
+        default: medium
+        options:
+          values:
+            - { name: medium, label: Medium }
+            - { name: tall, label: Tall }
+
+  facts:
+    type: object
+    label: Lodge facts
+    fields:
+      - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
+      - name: items
+        label: Facts
+        type: object
+        list: true
+        fields:
+          - { name: label, label: Label, type: string, required: true, description: "For example: Beds" }
+          - { name: value, label: Value, type: string, required: true, description: "For example: 26" }
 
   gallery:
     type: object
     label: Gallery
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - name: images
         label: Photos
         type: object
@@ -83,12 +130,15 @@ components:
     label: Lodge cards
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
+      - { name: intro, label: Intro text (optional), type: rich-text, options: { format: markdown, media: false } }
       - name: cards
         label: Cards
         type: object
         list: true
         fields:
           - { name: title, label: Title, type: string, required: true }
+          - { name: location, label: Where (optional), type: string, description: "For example: Mt Buller, 1,600 m" }
           - { name: image, label: Image, type: image }
           - { name: alt, label: Image description, type: string }
           - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
@@ -100,6 +150,7 @@ components:
     label: Call to action
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
       - { name: buttonLabel, label: Button text, type: string, required: true }
       - { name: buttonLink, label: Button link, type: string, required: true }
@@ -109,6 +160,7 @@ components:
     label: Map
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - { name: name, label: Place name (optional), type: string }
       - { name: address, label: Address, type: text, required: true }
       - name: latitude
@@ -123,6 +175,7 @@ components:
     label: Video
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - { name: url, label: YouTube or Vimeo address, type: string, required: true }
       - { name: title, label: Video title, type: string, required: true }
 
@@ -131,6 +184,7 @@ components:
     label: Questions and answers
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - name: items
         label: Questions
         type: object
@@ -144,6 +198,7 @@ components:
     label: Tariff table
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - { name: caption, label: Table title (optional), type: string }
       - { name: columns, label: Column headings, type: string, list: true, required: true }
       - name: rows
@@ -159,6 +214,7 @@ components:
     label: Embed (Google Form, YouTube, Vimeo, OpenStreetMap)
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - name: url
         label: Address
         type: string
@@ -172,6 +228,7 @@ components:
     label: Contact list
     fields:
       - { name: heading, label: Heading (optional), type: string }
+      - { name: background, component: background }
       - name: items
         label: Contacts
         type: object
@@ -191,6 +248,7 @@ components:
         label: Heading (optional)
         type: string
         description: Shows every camera switched on under Snow cams in the menu on the left
+      - { name: background, component: background }
 
   blocks:
     type: block
@@ -200,8 +258,10 @@ components:
       - { name: text, label: Text, component: text }
       - { name: imageText, label: Image with text, component: imageText }
       - { name: image, label: Image, component: image }
+      - { name: photo, label: Full-width photo, component: photo }
       - { name: gallery, label: Gallery, component: gallery }
       - { name: lodgeCards, label: Lodge cards, component: lodgeCards }
+      - { name: facts, label: Lodge facts, component: facts }
       - { name: cta, label: Call to action, component: cta }
       - { name: map, label: Map, component: map }
       - { name: video, label: Video, component: video }
@@ -228,30 +288,39 @@ content:
       - name: layout
         label: Layout
         type: select
-        default: standard
+        default: full
         options:
           values:
-            - { name: standard, label: Standard (full width) }
+            - { name: full, label: Full width sections }
             - { name: sidebar, label: Main plus sidebar }
-            - { name: home, label: Home (intro plus blocks) }
       - name: description
         label: Search description (optional)
         type: text
         description: One or two sentences shown in Google results
-      - name: banners
-        label: Banner photos
-        type: image
-        description: Up to 7 wide photos. More than one fades in turn.
-        options:
-          multiple: { max: 7 }
-      - name: bannerHeight
-        label: Banner height
-        type: select
-        default: standard
-        options:
-          values:
-            - { name: standard, label: Standard }
-            - { name: short, label: Short (better for low-resolution photos) }
+      - name: hero
+        label: Top of page
+        type: object
+        fields:
+          - name: style
+            label: Style
+            type: select
+            default: none
+            options:
+              values:
+                - { name: large, label: "Large: full-screen photo with title and buttons (home page)" }
+                - { name: medium, label: "Medium: photo with the page title on it" }
+                - { name: small, label: "Small: short photo strip (good for low-resolution photos)" }
+                - { name: split, label: "Split: one photo beside the title" }
+                - { name: none, label: No photo }
+          - name: images
+            label: Photos
+            type: image
+            description: More than one photo makes a slider. Large needs photos at least 2000 pixels wide.
+            options:
+              multiple: { max: 7 }
+          - { name: title, label: Title on the photo (optional), type: string, description: Leave blank to use the page title }
+          - { name: text, label: Text (optional), type: text }
+          - { name: buttons, label: Buttons (up to 2), component: linkItem, list: { max: 2 } }
       - name: body
         label: Intro text
         type: rich-text
@@ -300,6 +369,26 @@ content:
             - { name: lora-source-sans, label: Lora headings with Source Sans text }
             - { name: montserrat-inter, label: Montserrat headings with Inter text }
             - { name: system, label: Device fonts (fastest) }
+      - name: look
+        label: Look
+        type: object
+        fields:
+          - name: header
+            label: Header
+            type: select
+            default: solid
+            options:
+              values:
+                - { name: solid, label: White header }
+                - { name: overPhoto, label: "See-through header on top of large and medium photos" }
+          - name: corners
+            label: Corners
+            type: select
+            default: rounded
+            options:
+              values:
+                - { name: rounded, label: Rounded }
+                - { name: square, label: Square }
       - { name: menu, label: Menu, component: linkItem, list: true, required: true }
       - name: headerButton
         label: Header button
@@ -308,6 +397,15 @@ content:
           - { name: show, label: Show button, type: boolean }
           - { name: label, label: Button text, type: string }
           - { name: link, label: Button link, type: string }
+      - name: bookingBand
+        label: Booking band (above the footer on every page)
+        type: object
+        fields:
+          - { name: show, label: Show band, type: boolean }
+          - { name: title, label: Title, type: string }
+          - { name: text, label: Text, type: text }
+          - { name: buttonLabel, label: Button text, type: string }
+          - { name: buttonLink, label: Button link, type: string }
       - name: contact
         label: Contact details
         type: object

@@ -52,51 +52,66 @@ const optionalLink = z
 
 const linkItem = z.object({ label: z.string().min(1), link });
 
+// A list editors may leave empty (Pages CMS may save null).
+const list = (item) => z.array(item).nullish().transform((v) => v ?? []);
+
 // An image editors may leave blank (Pages CMS saves "" or null).
 const optionalImage = (image) => z.preprocess((v) => (v ? v : undefined), image().optional());
 
+const altText = z.string().min(1, 'Describe the image for screen readers');
+
 // ---------- Blocks ----------
-// Each block has a "type" (what Pages CMS stores as the block key) and an
-// optional heading. Add new block types here, in components/Blocks.astro,
-// and in starter/.pages.yml.
+// Each block has a "type" (what Pages CMS stores as the block key), an
+// optional heading and, in full-width pages, a background band.
+// Add new block types here, in components/Blocks.astro, and in
+// starter/.pages.yml.
 
 function blockSchemas(image) {
-  const heading = optionalText;
-  const pic = z.object({ image: image(), alt: z.string().min(1, 'Describe the image for screen readers') });
+  const common = {
+    heading: optionalText,
+    // white, tint (light grey-blue) or dark (the club's dark colour).
+    // Ignored in the sidebar.
+    background: z.enum(['white', 'tint', 'dark']).nullish().transform((v) => v ?? 'white'),
+  };
+  const pic = z.object({ image: image(), alt: altText });
 
   return z.discriminatedUnion('type', [
-    z.object({ type: z.literal('text'), heading, body: z.string().default('') }),
+    z.object({ type: z.literal('text'), ...common, body: z.string().default('') }),
 
-    z.object({
-      type: z.literal('image'),
-      heading,
-      image: image(),
-      alt: z.string().min(1, 'Describe the image for screen readers'),
-      caption: optionalText,
-    }),
+    z.object({ type: z.literal('image'), ...common, image: image(), alt: altText, caption: optionalText }),
 
     z.object({
       type: z.literal('imageText'),
-      heading,
+      ...common,
       image: image(),
-      alt: z.string().min(1, 'Describe the image for screen readers'),
+      alt: altText,
       body: z.string().default(''),
       imagePosition: z.enum(['left', 'right']).default('left'),
+      buttonLabel: optionalText,
+      buttonLink: optionalLink,
     }),
 
+    // A big photo across the full width of the screen, between sections.
     z.object({
-      type: z.literal('gallery'),
-      heading,
-      images: z.array(pic.extend({ caption: optionalText })).min(1),
+      type: z.literal('photo'),
+      ...common,
+      image: image(),
+      alt: altText,
+      caption: optionalText,
+      height: z.enum(['medium', 'tall']).default('medium'),
     }),
+
+    z.object({ type: z.literal('gallery'), ...common, images: z.array(pic.extend({ caption: optionalText })).min(1) }),
 
     z.object({
       type: z.literal('lodgeCards'),
-      heading,
+      ...common,
+      intro: optionalText,
       cards: z
         .array(
           z.object({
             title: z.string().min(1),
+            location: optionalText, // for example "Mt Buller, 1,600 m"
             image: optionalImage(image),
             alt: optionalText,
             body: z.string().default(''),
@@ -107,9 +122,16 @@ function blockSchemas(image) {
         .min(1),
     }),
 
+    // Key details about a lodge: beds, rooms, season, altitude, parking...
+    z.object({
+      type: z.literal('facts'),
+      ...common,
+      items: z.array(z.object({ label: z.string().min(1), value: z.string().min(1) })).min(1),
+    }),
+
     z.object({
       type: z.literal('cta'),
-      heading,
+      ...common,
       body: z.string().default(''),
       buttonLabel: z.string().min(1),
       buttonLink: link,
@@ -117,7 +139,7 @@ function blockSchemas(image) {
 
     z.object({
       type: z.literal('map'),
-      heading,
+      ...common,
       name: optionalText,
       address: z.string().min(1),
       // Coordinates are optional. Without them the block shows the address
@@ -129,20 +151,20 @@ function blockSchemas(image) {
 
     z.object({
       type: z.literal('video'),
-      heading,
+      ...common,
       url: z.string().refine((v) => videoEmbedUrl(v) !== null, 'Paste a YouTube or Vimeo video address'),
       title: z.string().min(1, 'Give the video a short title for screen readers'),
     }),
 
     z.object({
       type: z.literal('faq'),
-      heading,
+      ...common,
       items: z.array(z.object({ question: z.string().min(1), answer: z.string().min(1) })).min(1),
     }),
 
     z.object({
       type: z.literal('tariffTable'),
-      heading,
+      ...common,
       caption: optionalText,
       columns: z.array(z.string()).min(1),
       rows: z.array(z.object({ cells: z.array(z.string()) })).min(1),
@@ -151,7 +173,7 @@ function blockSchemas(image) {
 
     z.object({
       type: z.literal('embed'),
-      heading,
+      ...common,
       url: z.string().superRefine((value, ctx) => {
         const problem = embedProblem(value);
         if (problem) ctx.addIssue({ code: 'custom', message: problem });
@@ -162,7 +184,7 @@ function blockSchemas(image) {
 
     z.object({
       type: z.literal('contactList'),
-      heading,
+      ...common,
       items: z
         .array(
           z.object({
@@ -176,11 +198,11 @@ function blockSchemas(image) {
         .min(1),
     }),
 
-    z.object({ type: z.literal('snowCams'), heading }),
+    z.object({ type: z.literal('snowCams'), ...common }),
 
     // Paid one-off work for a single club. Renders custom/<name>.astro from
     // the club repo. Not offered in the CMS; added by us.
-    z.object({ type: z.literal('custom'), name: z.string().regex(/^[a-z0-9-]+$/) }),
+    z.object({ type: z.literal('custom'), ...common, name: z.string().regex(/^[a-z0-9-]+$/) }),
   ]);
 }
 
@@ -189,16 +211,41 @@ function blockSchemas(image) {
 const pages = defineCollection({
   loader: glob({ pattern: '*.md', base: './content/pages' }),
   schema: ({ image }) =>
-    z.object({
-      title: z.string().min(1),
-      description: optionalText, // shown in search results
-      layout: z.enum(['home', 'standard', 'sidebar']).default('standard'),
-      banners: z.array(image()).max(7, 'Up to 7 banner images').nullish().transform((v) => v ?? []),
-      bannerHeight: z.enum(['standard', 'short']).default('standard'),
-      hidden: z.boolean().default(false), // true = not published
-      blocks: z.array(blockSchemas(image)).nullish().transform((v) => v ?? []),
-      sidebar: z.array(blockSchemas(image)).nullish().transform((v) => v ?? []),
-    }),
+    z
+      .object({
+        title: z.string().min(1),
+        description: optionalText, // shown in search results
+        // full: stacked full-width sections. sidebar: main column plus sidebar.
+        layout: z.enum(['full', 'sidebar']).default('full'),
+        // The top of the page. See components/Hero.astro for each style.
+        hero: z
+          .object({
+            style: z.enum(['large', 'medium', 'small', 'split', 'none']).default('medium'),
+            images: list(image()), // more than one = slider
+            title: optionalText, // defaults to the page title
+            text: optionalText,
+            buttons: list(linkItem),
+          })
+          .default({ style: 'none', images: [], buttons: [] }),
+        hidden: z.boolean().default(false), // true = not published
+        blocks: list(blockSchemas(image)),
+        sidebar: list(blockSchemas(image)),
+      })
+      .superRefine((p, ctx) => {
+        const h = p.hero;
+        if (h.style !== 'none' && h.images.length === 0) {
+          ctx.addIssue({ code: 'custom', path: ['hero', 'images'], message: `The "${h.style}" top style needs at least one photo. Add a photo or choose "No photo".` });
+        }
+        if (h.images.length > 7) {
+          ctx.addIssue({ code: 'custom', path: ['hero', 'images'], message: 'Up to 7 photos at the top of a page' });
+        }
+        if (h.style === 'split' && h.images.length > 1) {
+          ctx.addIssue({ code: 'custom', path: ['hero', 'images'], message: 'The "split" top style uses one photo' });
+        }
+        if (h.buttons.length > 2) {
+          ctx.addIssue({ code: 'custom', path: ['hero', 'buttons'], message: 'Up to 2 buttons at the top of a page' });
+        }
+      }),
 });
 
 const settings = defineCollection({
@@ -212,19 +259,37 @@ const settings = defineCollection({
         url: httpsUrl, // production address, used for links in search results
         description: optionalText,
         logoOnLight: image(), // used in the white header
-        logoOnDark: optionalImage(image), // used in the dark footer
+        logoOnDark: optionalImage(image), // used in the dark footer and see-through header
         icon: optionalImage(image), // square image for the browser tab icon
         colours: z.object({
           primary: hex, // links and buttons
           heading: hex, // headings and menu
           text: hex, // body text
           accent: hex, // decorative lines only, never text
-          dark: hex, // footer background
+          dark: hex, // footer and dark section background
         }),
         fonts: z.enum(FONT_PAIR_IDS).default('system'),
+        look: z
+          .object({
+            // solid: white header. overPhoto: see-through header on top of
+            // large and medium top photos (needs the dark-background logo).
+            header: z.enum(['solid', 'overPhoto']).default('solid'),
+            corners: z.enum(['rounded', 'square']).default('rounded'),
+          })
+          .default({ header: 'solid', corners: 'rounded' }),
         menu: z.array(linkItem).min(1),
         headerButton: z
           .object({ show: z.boolean().default(false), label: optionalText, link: optionalLink })
+          .default({ show: false }),
+        // Band above the footer on every page, usually "Book your stay".
+        bookingBand: z
+          .object({
+            show: z.boolean().default(false),
+            title: optionalText,
+            text: optionalText,
+            buttonLabel: optionalText,
+            buttonLink: optionalLink,
+          })
           .default({ show: false }),
         contact: z
           .object({
@@ -234,15 +299,13 @@ const settings = defineCollection({
             abn: optionalText,
           })
           .default({}),
-        social: z
-          .array(z.object({ platform: z.enum(['facebook', 'instagram', 'x', 'youtube', 'linkedin']), url: httpsUrl }))
-          .default([]),
+        social: list(z.object({ platform: z.enum(['facebook', 'instagram', 'x', 'youtube', 'linkedin']), url: httpsUrl })),
         footer: z
           .object({
             showContact: z.boolean().default(true),
             showSocial: z.boolean().default(true),
             text: optionalText,
-            links: z.array(linkItem).default([]),
+            links: list(linkItem),
           })
           .default({ showContact: true, showSocial: true, links: [] }),
         // Reserved for members-only areas (signed-cookie single sign-on).
@@ -258,23 +321,27 @@ const settings = defineCollection({
         if (s.headerButton.show && (!s.headerButton.label || !s.headerButton.link)) {
           ctx.addIssue({ code: 'custom', path: ['headerButton'], message: 'Header button needs a label and a link' });
         }
+        const b = s.bookingBand;
+        if (b.show && (!b.title || !b.buttonLabel || !b.buttonLink)) {
+          ctx.addIssue({ code: 'custom', path: ['bookingBand'], message: 'Booking band needs a title, button text and button link' });
+        }
+        if (s.look.header === 'overPhoto' && !s.logoOnDark) {
+          ctx.addIssue({ code: 'custom', path: ['look', 'header'], message: 'A see-through header needs a logo for dark backgrounds' });
+        }
       }),
 });
 
 const snowcams = defineCollection({
   loader: file('./content/settings/snowcams.json', { parser: (text) => ({ snowcams: JSON.parse(text) }) }),
   schema: z.object({
-    cameras: z
-      .array(
-        z.object({
-          name: z.string().min(1),
-          url: httpsUrl, // address of the latest image
-          enabled: z.boolean().default(false),
-          caption: optionalText,
-        }),
-      )
-      .max(12)
-      .default([]),
+    cameras: list(
+      z.object({
+        name: z.string().min(1),
+        url: httpsUrl, // address of the latest image
+        enabled: z.boolean().default(false),
+        caption: optionalText,
+      }),
+    ).pipe(z.array(z.any()).max(12)),
   }),
 });
 

@@ -1,5 +1,6 @@
 ---
-// Image with text: image on one side, text on the other. Stacks on phones.
+// Image with text: image on one side, text (and an optional button) on the
+// other. Stacks on phones.
 import { Picture } from 'astro:assets';
 import Markdown from '../Markdown.astro';
 const { block } = Astro.props;
@@ -10,8 +11,12 @@ const { block } = Astro.props;
     src={block.image}
     alt={block.alt}
     formats={['avif', 'webp']}
-    widths={[400, 800].filter((w) => w <= block.image.width).concat([Math.min(block.image.width, 800)])}
+    widths={[400, 800, 1200].filter((w) => w < block.image.width).concat([Math.min(block.image.width, 1200)])}
     sizes="(max-width: 800px) 100vw, 50vw"
   />
-  <Markdown source={block.body} />
+  <div class="image-text-body">
+    {block.heading && <h2>{block.heading}</h2>}
+    <Markdown source={block.body} />
+    {block.buttonLabel && block.buttonLink && <p><a class="button" href={block.buttonLink}>{block.buttonLabel}</a></p>}
+  </div>
 </div>

@@ -1,0 +1,15 @@
+---
+// Lodge facts: short label and value pairs (Beds: 26, Season: June to October).
+const { block } = Astro.props;
+---
+
+<dl class="facts">
+  {
+    block.items.map((item) => (
+      <div>
+        <dt>{item.label}</dt>
+        <dd>{item.value}</dd>
+      </div>
+    ))
+  }
+</dl>

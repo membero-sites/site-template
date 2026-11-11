@@ -1,0 +1,19 @@
+---
+// The hero's text and buttons, shown under the page title when the top of
+// the page is a small photo strip or no photo.
+import Markdown from './Markdown.astro';
+const { hero } = Astro.props;
+---
+
+{hero.text && <Markdown source={hero.text} class="hero-text" />}
+{
+  hero.buttons.length > 0 && (
+    <p class="hero-buttons">
+      {hero.buttons.map((b, i) => (
+        <a class:list={['button', { 'button-quiet': i > 0 }]} href={b.link}>
+          {b.label}
+        </a>
+      ))}
+    </p>
+  )
+}

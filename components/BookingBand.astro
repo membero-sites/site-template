@@ -1,0 +1,26 @@
+---
+// Optional band above the footer on every page, usually "Book your stay"
+// linking to the booking service. Site settings > Booking band.
+
+import { getEntry } from 'astro:content';
+import Markdown from './Markdown.astro';
+
+const { data: s } = await getEntry('settings', 'site');
+const b = s.bookingBand;
+---
+
+{
+  b.show && (
+    <section class="booking-band" aria-label={b.title}>
+      <div class="container booking-band-inner">
+        <div>
+          <h2>{b.title}</h2>
+          {b.text && <Markdown source={b.text} />}
+        </div>
+        <a class="button button-light" href={b.buttonLink}>
+          {b.buttonLabel}
+        </a>
+      </div>
+    </section>
+  )
+}

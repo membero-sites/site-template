@@ -1,22 +1,24 @@
 ---
-// The page shell: <head>, header, banner, main content, footer.
+// The page shell: <head>, header, top-of-page hero, main content,
+// booking band and footer.
 
 import { getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
-import Banner from './Banner.astro';
+import Hero from './Hero.astro';
+import BookingBand from './BookingBand.astro';
 import '../styles/global.css';
 
 interface Props {
   title?: string; // page title; omitted on the home page
+  pageTitle?: string; // heading shown in the hero
   description?: string;
-  banners?: ImageMetadata[];
-  bannerHeight?: 'standard' | 'short';
+  hero?: any;
   noindex?: boolean;
 }
 
-const { title, description, banners = [], bannerHeight = 'standard', noindex = false } = Astro.props;
+const { title, pageTitle = title ?? '', description, hero, noindex = false } = Astro.props;
 const { data: s } = await getEntry('settings', 'site');
 
 const fullTitle = title ? `${title} | ${s.name}` : s.name;
@@ -24,6 +26,10 @@ const metaDescription = description ?? s.description;
 const canonical = new URL(Astro.url.pathname, s.url).toString();
 // Preview sites (no SITE_INDEXING=on) are kept out of search results.
 const blockIndexing = noindex || process.env.SITE_INDEXING !== 'on';
+
+// See-through header only sits on top of large and medium photos.
+const overPhoto =
+  s.look.header === 'overPhoto' && hero && (hero.style === 'large' || hero.style === 'medium') && hero.images.length > 0;
 
 // Browser tab and home-screen icons, generated from the club's square icon
 // (or the logo, padded to a square, if there's no icon).
@@ -34,7 +40,7 @@ const icon180 = await getImage({ ...iconOpts, width: 180, height: 180 });
 ---
 
 <!doctype html>
-<html lang="en-AU">
+<html lang="en-AU" class:list={[`corners-${s.look.corners}`]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -51,11 +57,14 @@ const icon180 = await getImage({ ...iconOpts, width: 180, height: 180 });
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <Header />
-    {banners.length > 0 && <Banner images={banners} height={bannerHeight} />}
+    <div class:list={['page-top', { 'has-overlay-header': overPhoto }]}>
+      <Header overPhoto={overPhoto} />
+      {hero && hero.style !== 'none' && <Hero hero={hero} pageTitle={pageTitle} />}
+    </div>
     <main id="main" tabindex="-1">
       <slot />
     </main>
+    <BookingBand />
     <Footer />
     <script>
       import '../scripts/site.js';
