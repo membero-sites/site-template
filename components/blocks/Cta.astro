@@ -6,5 +6,5 @@ const { block } = Astro.props;
 
 <div class="cta">
   <Markdown source={block.body} />
-  <a class="button" href={block.buttonLink}>{block.buttonLabel}</a>
+  {block.buttonLink && <a class="button" href={block.buttonLink}>{block.buttonLabel}</a>}
 </div>

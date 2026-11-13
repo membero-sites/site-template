@@ -20,16 +20,11 @@ import { z } from 'astro/zod';
 import { contrastProblems } from './lib/colour.mjs';
 import { embedProblem, videoEmbedUrl } from './lib/embeds.mjs';
 import { FONT_PAIR_IDS } from './lib/fonts.mjs';
-import { linkProblem } from './lib/links.mjs';
+import { resolveTarget, imageExists, warn, PLACEHOLDER_IMAGE } from './lib/targets.mjs';
 
 // ---------- Shared field types ----------
 
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Colours must look like #1C3956');
-
-const link = z.string().superRefine((value, ctx) => {
-  const problem = linkProblem(value);
-  if (problem) ctx.addIssue({ code: 'custom', message: problem });
-});
 
 const httpsUrl = z.string().superRefine((value, ctx) => {
   try {
@@ -43,15 +38,6 @@ const httpsUrl = z.string().superRefine((value, ctx) => {
 // Optional text that editors may leave blank in the CMS (saved as "" or null).
 const optionalText = z.string().nullish().transform((v) => (v ? v : undefined));
 
-// A link editors may leave blank.
-const optionalLink = z
-  .string()
-  .nullish()
-  .transform((v) => (v ? v : undefined))
-  .pipe(link.optional());
-
-const linkItem = z.object({ label: z.string().min(1), link });
-
 // Editors sometimes add a list entry and leave it blank (for example a
 // second question with nothing in it). Blank entries are dropped rather
 // than failing the build, because editors never see build errors.
@@ -64,6 +50,46 @@ function isBlank(value) {
 }
 const withoutBlanks = (v) => (Array.isArray(v) ? v.filter((item) => !isBlank(item)) : v);
 
+const withoutBlanksEarly = withoutBlanks;
+
+// ---------- Links ----------
+// Editors choose a page from a list ("page", a Pages CMS reference to the
+// page file) or type an address for another website ("url"). Older content
+// may still have a typed "link". All three are turned into one "link" here.
+// A link to a page that doesn't exist is left out with a build warning
+// (lib/targets.mjs), so a renamed page can't fail the build.
+
+const text = z.string().nullish();
+
+// Fields for one link, named with a prefix: link fields ("page", "url",
+// "link") or button fields ("buttonPage", "buttonUrl", "buttonLink").
+const linkFields = (prefix = '') => {
+  const key = (k) => (prefix ? prefix + k[0].toUpperCase() + k.slice(1) : k);
+  return { [key('page')]: text, [key('url')]: text, [key('link')]: text };
+};
+const resolveFields = (obj, prefix, where) => {
+  const key = (k) => (prefix ? prefix + k[0].toUpperCase() + k.slice(1) : k);
+  const page = obj[key('page')];
+  const typed = obj[key('url')] || obj[key('link')];
+  const out = { ...obj };
+  delete out[key('page')];
+  delete out[key('url')];
+  out[key('link')] = resolveTarget(page, typed, where);
+  return out;
+};
+
+// A labelled link (menu, footer links, buttons on a photo). Items whose
+// target can't be found are dropped from their list.
+const linkItem = (where) =>
+  z
+    .object({ label: z.string().min(1), ...linkFields() })
+    .transform((i) => resolveFields(i, '', `${where} "${i.label}"`));
+const linkList = (where) =>
+  z.preprocess(
+    withoutBlanksEarly,
+    z.array(linkItem(where)).nullish().transform((v) => (v ?? []).filter((i) => i.link)),
+  );
+
 // A list editors may leave empty (Pages CMS may save null).
 const list = (item) =>
   z.preprocess(withoutBlanks, z.array(item).nullish().transform((v) => v ?? []));
@@ -71,8 +97,38 @@ const list = (item) =>
 // A list that needs at least one filled-in entry.
 const listOfAtLeastOne = (item) => z.preprocess(withoutBlanks, z.array(item).min(1, 'Add at least one entry'));
 
-// An image editors may leave blank (Pages CMS saves "" or null).
-const optionalImage = (image) => z.preprocess((v) => (v ? v : undefined), image().optional());
+// ---------- Images ----------
+// A photo that has been deleted or renamed must not fail the build.
+// Required photos fall back to a grey "image missing" placeholder; optional
+// photos and photos in lists are left out. Both print a build warning.
+
+const requiredImage = (image, where) =>
+  z.preprocess((v) => {
+    if (imageExists(v)) return v;
+    warn(`${where}: photo "${v ?? ''}" not found, showing a placeholder. Upload it again or choose another photo.`);
+    return PLACEHOLDER_IMAGE;
+  }, image());
+
+const optionalImage = (image, where = 'A section') =>
+  z.preprocess((v) => {
+    if (!v) return undefined;
+    if (imageExists(v)) return v;
+    warn(`${where}: photo "${v}" not found, so it was left out.`);
+    return undefined;
+  }, image().optional());
+
+// A list of photos (top of page): missing ones are left out.
+const imageList = (image, where) =>
+  z.preprocess(
+    (v) =>
+      (Array.isArray(v) ? v : []).filter((p) => {
+        if (!p) return false;
+        if (imageExists(p)) return true;
+        warn(`${where}: photo "${p}" not found, so it was left out.`);
+        return false;
+      }),
+    z.array(image()),
+  );
 
 const altText = z.string().min(1, 'Describe the image for screen readers');
 
@@ -89,35 +145,36 @@ function blockSchemas(image) {
     // Ignored in the sidebar.
     background: z.enum(['white', 'tint', 'dark']).nullish().transform((v) => v ?? 'white'),
   };
-  const pic = z.object({ image: image(), alt: altText });
+  // Gallery photos: a missing one is dropped from the gallery.
+  const pic = z.object({ image: optionalImage(image, 'Gallery'), alt: altText });
 
   return z.discriminatedUnion('type', [
     z.object({ type: z.literal('text'), ...common, body: z.string().default('') }),
 
-    z.object({ type: z.literal('image'), ...common, image: image(), alt: altText, caption: optionalText }),
+    z.object({ type: z.literal('image'), ...common, image: requiredImage(image, 'Image section'), alt: altText, caption: optionalText }),
 
     z.object({
       type: z.literal('imageText'),
       ...common,
-      image: image(),
+      image: requiredImage(image, 'Image with text section'),
       alt: altText,
       body: z.string().default(''),
       imagePosition: z.enum(['left', 'right']).default('left'),
       buttonLabel: optionalText,
-      buttonLink: optionalLink,
+      ...linkFields('button'),
     }),
 
     // A big photo across the full width of the screen, between sections.
     z.object({
       type: z.literal('photo'),
       ...common,
-      image: image(),
+      image: requiredImage(image, 'Full-width photo'),
       alt: altText,
       caption: optionalText,
       height: z.enum(['medium', 'tall']).default('medium'),
     }),
 
-    z.object({ type: z.literal('gallery'), ...common, images: listOfAtLeastOne(pic.extend({ caption: optionalText })) }),
+    z.object({ type: z.literal('gallery'), ...common, images: listOfAtLeastOne(pic.extend({ caption: optionalText })).transform((l) => l.filter((i) => i.image)) }),
 
     z.object({
       type: z.literal('lodgeCards'),
@@ -127,10 +184,10 @@ function blockSchemas(image) {
         z.object({
           title: z.string().min(1),
           location: optionalText, // for example "Mt Buller, 1,600 m"
-          image: optionalImage(image),
+          image: optionalImage(image, 'Lodge card'),
           alt: optionalText,
           body: z.string().default(''),
-          link: optionalLink,
+          ...linkFields(),
           linkLabel: optionalText,
         }),
       ),
@@ -148,7 +205,7 @@ function blockSchemas(image) {
       ...common,
       body: z.string().default(''),
       buttonLabel: z.string().min(1),
-      buttonLink: link,
+      ...linkFields('button'),
     }),
 
     z.object({
@@ -215,7 +272,17 @@ function blockSchemas(image) {
     // Paid one-off work for a single club. Renders custom/<name>.astro from
     // the club repo. Not offered in the CMS; added by us.
     z.object({ type: z.literal('custom'), ...common, name: z.string().regex(/^[a-z0-9-]+$/) }),
-  ]);
+  ]).transform(resolveBlockLinks);
+}
+
+// Turn each block's page/url choices into a single link (see Links above).
+function resolveBlockLinks(b) {
+  if (b.type === 'imageText') return resolveFields(b, 'button', 'Image with text button');
+  if (b.type === 'cta') return resolveFields(b, 'button', `Call to action "${b.buttonLabel}"`);
+  if (b.type === 'lodgeCards') {
+    return { ...b, cards: b.cards.map((c) => resolveFields(c, '', `Lodge card "${c.title}"`)) };
+  }
+  return b;
 }
 
 // ---------- Collections ----------
@@ -233,10 +300,10 @@ const pages = defineCollection({
         hero: z
           .object({
             style: z.enum(['large', 'medium', 'small', 'split', 'none']).default('medium'),
-            images: list(image()), // more than one = slider
+            images: imageList(image, 'Top of page'), // more than one = slider
             title: optionalText, // defaults to the page title
             text: optionalText,
-            buttons: list(linkItem),
+            buttons: linkList('Top of page button'),
           })
           .default({ style: 'none', images: [], buttons: [] }),
         hidden: z.boolean().default(false), // true = not published
@@ -265,9 +332,9 @@ const settings = defineCollection({
         name: z.string().min(1),
         url: httpsUrl, // production address, used for links in search results
         description: optionalText,
-        logoOnLight: image(), // used in the white header
-        logoOnDark: optionalImage(image), // used in the dark footer and see-through header
-        icon: optionalImage(image), // square image for the browser tab icon
+        logoOnLight: requiredImage(image, 'Logo'), // used in the white header
+        logoOnDark: optionalImage(image, 'Dark background logo'), // used in the dark footer and see-through header
+        icon: optionalImage(image, 'Square icon'), // square image for the browser tab icon
         colours: z.object({
           primary: hex, // links and buttons
           heading: hex, // headings and menu
@@ -284,10 +351,15 @@ const settings = defineCollection({
             corners: z.enum(['rounded', 'square']).default('rounded'),
           })
           .default({ header: 'solid', corners: 'rounded' }),
-        menu: listOfAtLeastOne(linkItem),
+        menu: linkList('Menu item'),
+        // A header button with no label or no working link is simply hidden.
         headerButton: z
-          .object({ show: z.boolean().default(false), label: optionalText, link: optionalLink })
-          .default({ show: false }),
+          .object({ show: z.boolean().nullish(), label: optionalText, ...linkFields() })
+          .nullish()
+          .transform((h) => {
+            const r = resolveFields(h ?? {}, '', 'Header button');
+            return { ...r, show: Boolean(r.show && r.label && r.link) };
+          }),
         // Band above the footer on every page, usually "Book your stay".
         bookingBand: z
           .object({
@@ -295,9 +367,13 @@ const settings = defineCollection({
             title: optionalText,
             text: optionalText,
             buttonLabel: optionalText,
-            buttonLink: optionalLink,
+            ...linkFields('button'),
           })
-          .default({ show: false }),
+          .nullish()
+          .transform((b) => {
+            const r = resolveFields(b ?? {}, 'button', 'Booking band button');
+            return { ...r, show: Boolean(r.show && r.title && r.buttonLabel && r.buttonLink) };
+          }),
         contact: z
           .object({
             email: optionalText,
@@ -312,7 +388,7 @@ const settings = defineCollection({
             showContact: z.boolean().default(true),
             showSocial: z.boolean().default(true),
             text: optionalText,
-            links: list(linkItem),
+            links: linkList('Footer link'),
           })
           .default({ showContact: true, showSocial: true, links: [] }),
         // Reserved for members-only areas (signed-cookie single sign-on).
@@ -325,16 +401,15 @@ const settings = defineCollection({
         for (const problem of contrastProblems(s.colours)) {
           ctx.addIssue({ code: 'custom', path: ['colours'], message: `${problem}. Choose a darker colour.` });
         }
-        if (s.headerButton.show && (!s.headerButton.label || !s.headerButton.link)) {
-          ctx.addIssue({ code: 'custom', path: ['headerButton'], message: 'Header button needs a label and a link' });
-        }
-        const b = s.bookingBand;
-        if (b.show && (!b.title || !b.buttonLabel || !b.buttonLink)) {
-          ctx.addIssue({ code: 'custom', path: ['bookingBand'], message: 'Booking band needs a title, button text and button link' });
-        }
+      })
+      // A see-through header needs the dark-background logo; without one,
+      // use the white header rather than fail.
+      .transform((s) => {
         if (s.look.header === 'overPhoto' && !s.logoOnDark) {
-          ctx.addIssue({ code: 'custom', path: ['look', 'header'], message: 'A see-through header needs a logo for dark backgrounds' });
+          warn('Site settings: the see-through header needs a logo for dark backgrounds, so the white header is used.');
+          return { ...s, look: { ...s.look, header: 'solid' } };
         }
+        return s;
       }),
 });
 

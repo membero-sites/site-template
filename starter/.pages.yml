@@ -20,11 +20,8 @@ components:
         label: Label
         type: string
         required: true
-      - name: link
-        label: Link
-        type: string
-        required: true
-        description: A page like /about, or a full address like https://bookings.example.com.au
+      - { name: page, label: Page on this site, type: reference, options: { collection: pages, value: "{path}", label: "{primary}" } }
+      - { name: url, label: Or another address, type: string, description: "Only for other websites, email (mailto:) or phone (tel:). For a page on this site, choose it above." }
 
   background:
     type: select
@@ -78,7 +75,8 @@ components:
             - { name: left, label: Left }
             - { name: right, label: Right }
       - { name: buttonLabel, label: Button text (optional), type: string }
-      - { name: buttonLink, label: Button link (optional), type: string }
+      - { name: buttonPage, label: Button goes to page, type: reference, options: { collection: pages, value: "{path}", label: "{primary}" } }
+      - { name: buttonUrl, label: Or button goes to address, type: string, description: "Only for other websites, email (mailto:) or phone (tel:). For a page on this site, choose it above." }
 
   photo:
     type: object
@@ -142,7 +140,8 @@ components:
           - { name: image, label: Image, type: image }
           - { name: alt, label: Image description, type: string }
           - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
-          - { name: link, label: Link, type: string, description: For example /mt-buller }
+          - { name: page, label: Links to page, type: reference, options: { collection: pages, value: "{path}", label: "{primary}" } }
+          - { name: url, label: Or links to address, type: string, description: "Only for other websites, email (mailto:) or phone (tel:). For a page on this site, choose it above." }
           - { name: linkLabel, label: Link text (optional), type: string }
 
   cta:
@@ -153,7 +152,8 @@ components:
       - { name: background, component: background }
       - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
       - { name: buttonLabel, label: Button text, type: string, required: true }
-      - { name: buttonLink, label: Button link, type: string, required: true }
+      - { name: buttonPage, label: Button goes to page, type: reference, options: { collection: pages, value: "{path}", label: "{primary}" } }
+      - { name: buttonUrl, label: Or button goes to address, type: string, description: "Only for other websites, email (mailto:) or phone (tel:). For a page on this site, choose it above." }
 
   map:
     type: object
@@ -396,7 +396,8 @@ content:
         fields:
           - { name: show, label: Show button, type: boolean }
           - { name: label, label: Button text, type: string }
-          - { name: link, label: Button link, type: string }
+          - { name: page, label: Button goes to page, type: reference, options: { collection: pages, value: "{path}", label: "{primary}" } }
+          - { name: url, label: Or button goes to address, type: string, description: "Only for other websites, email (mailto:) or phone (tel:). For a page on this site, choose it above." }
       - name: bookingBand
         label: Booking band (above the footer on every page)
         type: object
@@ -405,7 +406,8 @@ content:
           - { name: title, label: Title, type: string }
           - { name: text, label: Text, type: text }
           - { name: buttonLabel, label: Button text, type: string }
-          - { name: buttonLink, label: Button link, type: string }
+          - { name: buttonPage, label: Button goes to page, type: reference, options: { collection: pages, value: "{path}", label: "{primary}" } }
+          - { name: buttonUrl, label: Or button goes to address, type: string, description: "Only for other websites, email (mailto:) or phone (tel:). For a page on this site, choose it above." }
       - name: contact
         label: Contact details
         type: object
