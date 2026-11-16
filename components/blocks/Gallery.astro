@@ -1,6 +1,7 @@
 ---
 // Gallery: a grid of images. Each links to the full-size version.
-import { Picture, getImage } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
+import { IMAGE_FORMAT, SIZES, widthsFor } from '../../lib/widths.mjs';
 const { block } = Astro.props;
 const items = await Promise.all(
   block.images.map(async (item) => ({
@@ -16,11 +17,11 @@ const items = await Promise.all(
       <li>
         <figure>
           <a href={item.full.src}>
-            <Picture
+            <Image
               src={item.image}
               alt={item.alt}
-              formats={['avif', 'webp']}
-              widths={[300, 600].filter((w) => w <= item.image.width).concat([Math.min(item.image.width, 600)])}
+              format={IMAGE_FORMAT}
+              widths={widthsFor(item.image, SIZES.thumb)}
               sizes="(max-width: 600px) 50vw, 300px"
             />
           </a>

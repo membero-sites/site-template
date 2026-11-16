@@ -12,16 +12,26 @@ import Base from '../components/Base.astro';
 import Blocks from '../components/Blocks.astro';
 import Markdown from '../components/Markdown.astro';
 import HeroExtras from '../components/HeroExtras.astro';
+import { warn } from '../lib/targets.mjs';
 
 export async function getStaticPaths() {
   const pages = await getCollection('pages', (p) => !p.data.hidden);
-  if (!pages.some((p) => p.id === 'home')) {
-    throw new Error('There is no home page. content/pages/home.md must exist and must not be hidden.');
-  }
-  return pages.map((page) => ({
+  const paths = pages.map((page) => ({
     params: { slug: page.id === 'home' ? undefined : page.id },
     props: { page },
   }));
+  // No home page (deleted, renamed or hidden): show the first page at "/"
+  // too, or a bare page if there are none, rather than fail the build.
+  if (!pages.some((p) => p.id === 'home')) {
+    warn('There is no published home page (content/pages/home.md). Another page is shown at the site address instead.');
+    const stand_in = pages[0] ?? {
+      id: 'home',
+      body: '',
+      data: { title: 'Welcome', layout: 'full', hero: { style: 'none', images: [], buttons: [] }, blocks: [], sidebar: [] },
+    };
+    paths.push({ params: { slug: undefined }, props: { page: { ...stand_in, id: 'home' } } });
+  }
+  return paths;
 }
 
 const { page } = Astro.props;

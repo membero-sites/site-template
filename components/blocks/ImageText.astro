@@ -1,17 +1,18 @@
 ---
 // Image with text: image on one side, text (and an optional button) on the
 // other. Stacks on phones.
-import { Picture } from 'astro:assets';
+import { Image } from 'astro:assets';
+import { IMAGE_FORMAT, SIZES, widthsFor } from '../../lib/widths.mjs';
 import Markdown from '../Markdown.astro';
 const { block } = Astro.props;
 ---
 
 <div class:list={['image-text', `image-${block.imagePosition}`]}>
-  <Picture
+  <Image
     src={block.image}
     alt={block.alt}
-    formats={['avif', 'webp']}
-    widths={[400, 800, 1200].filter((w) => w < block.image.width).concat([Math.min(block.image.width, 1200)])}
+    format={IMAGE_FORMAT}
+    widths={widthsFor(block.image, SIZES.content)}
     sizes="(max-width: 800px) 100vw, 50vw"
   />
   <div class="image-text-body">

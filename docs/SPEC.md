@@ -49,7 +49,7 @@ Amplify console for build status. Email on failed builds. Free uptime monitoring
 
 - **Pages**: Home (large slider). About, Mt Buller, Falls Creek (Main plus sidebar, lodge facts in the sidebar). Membership, Contact (contact list block), Snow Cams (full width). "Booking & Documentation" is a menu link to https://bookings.icicles.com.au. Cam can add pages with any layout.
 - **Colours**: links and buttons #2400B0 (12.3:1 on white), headings and nav #1C3956 (11.9:1), body text and footer background #23262A, #51A4DB for accents only (2.7:1 on white, fails as text).
-- **Photos**: served as optimised WebP/AVIF. History (1020x267) and Cross-Country (1136x358) are low resolution: used with the small top style or inside sections, never full screen.
+- **Photos**: served as optimised WebP at a few fixed sizes (lib/widths.mjs). History (1020x267) and Cross-Country (1136x358) are low resolution: used with the small top style or inside sections, never full screen.
 - **Location**: the 267x240 map screenshots are replaced by the map block with address and Directions link.
 - **Logos**: both supplied logos only work on light backgrounds. Light logo in the white header. A white single-colour version, generated from the logo, in the dark footer (subject to Cam's OK). Favicon sizes generated from the logo. Retro logo in the About sidebar.
 - **Snow cams**: three entries (Falls Creek Lodge, Falls Creek Valley, Mt Buller Summit), each with an on/off switch. Only the live camera is on. Image reloads in the browser every 5 minutes.

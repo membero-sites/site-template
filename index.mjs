@@ -65,6 +65,10 @@ export default function membero() {
 
         updateConfig({
           site: site.url,
+          // Cache outside node_modules so hosting can keep processed images
+          // between builds (amplify.yml caches .astro-cache/assets only;
+          // the content cache is always rebuilt from scratch).
+          cacheDir: new URL('./.astro-cache/', config.root),
           output: 'static',
           trailingSlash: 'ignore',
           build: {

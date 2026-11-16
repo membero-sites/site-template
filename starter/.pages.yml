@@ -104,6 +104,7 @@ components:
         label: Facts
         type: object
         list: true
+        required: true
         fields:
           - { name: label, label: Label, type: string, required: true, description: "For example: Beds" }
           - { name: value, label: Value, type: string, required: true, description: "For example: 26" }
@@ -118,6 +119,7 @@ components:
         label: Photos
         type: object
         list: true
+        required: true
         fields:
           - { name: image, label: Image, type: image, required: true }
           - { name: alt, label: Image description, type: string, required: true }
@@ -134,6 +136,7 @@ components:
         label: Cards
         type: object
         list: true
+        required: true
         fields:
           - { name: title, label: Title, type: string, required: true }
           - { name: location, label: Where (optional), type: string, description: "For example: Mt Buller, 1,600 m" }
@@ -151,7 +154,7 @@ components:
       - { name: heading, label: Heading (optional), type: string }
       - { name: background, component: background }
       - { name: body, label: Text, type: rich-text, options: { format: markdown, media: false } }
-      - { name: buttonLabel, label: Button text, type: string, required: true }
+      - { name: buttonLabel, label: Button text (optional), type: string }
       - { name: buttonPage, label: Button goes to page, type: reference, options: { collection: pages, value: "{path}", label: "{primary}" } }
       - { name: buttonUrl, label: Or button goes to address, type: string, description: "Only for other websites, email (mailto:) or phone (tel:). For a page on this site, choose it above." }
 
@@ -189,6 +192,7 @@ components:
         label: Questions
         type: object
         list: true
+        required: true
         fields:
           - { name: question, label: Question, type: string, required: true }
           - { name: answer, label: Answer, type: rich-text, required: true, options: { format: markdown, media: false } }
@@ -205,6 +209,7 @@ components:
         label: Rows
         type: object
         list: true
+        required: true
         fields:
           - { name: cells, label: Cells (one per column), type: string, list: true }
       - { name: note, label: Note under the table (optional), type: text }
@@ -233,6 +238,7 @@ components:
         label: Contacts
         type: object
         list: true
+        required: true
         fields:
           - { name: role, label: Role or topic, type: string, required: true }
           - { name: name, label: Name (optional), type: string }

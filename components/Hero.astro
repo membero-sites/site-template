@@ -16,7 +16,8 @@
 // (scripts/site.js). Reduced-motion visitors see the first photo only.
 // Hero photos are decorative (empty alt text); the title carries meaning.
 
-import { Picture } from 'astro:assets';
+import { Image } from 'astro:assets';
+import { IMAGE_FORMAT, SIZES, widthsFor } from '../lib/widths.mjs';
 import Markdown from './Markdown.astro';
 
 interface Props {
@@ -36,11 +37,6 @@ const title = hero.title ?? pageTitle;
 const slider = images.length > 1 && style !== 'split';
 const hasText = Boolean(text) || buttons.length > 0;
 
-// Responsive widths: never ask for a size bigger than the original.
-const widthsFor = (img: ImageMetadata, list: number[]) => {
-  const fit = list.filter((w) => w < img.width);
-  return [...fit, Math.min(img.width, list[list.length - 1])];
-};
 ---
 
 {
@@ -60,12 +56,12 @@ const widthsFor = (img: ImageMetadata, list: number[]) => {
             </p>
           )}
         </div>
-        <Picture
+        <Image
           src={images[0]}
           alt=""
           class="hero-split-photo"
-          formats={['avif', 'webp']}
-          widths={widthsFor(images[0], [480, 800, 1200])}
+          format={IMAGE_FORMAT}
+          widths={widthsFor(images[0], SIZES.split)}
           sizes="(max-width: 900px) 100vw, 50vw"
           loading="eager"
           fetchpriority="high"
@@ -81,11 +77,11 @@ const widthsFor = (img: ImageMetadata, list: number[]) => {
       <div class="hero-slides">
         {images.map((img, i) => (
           <div class:list={['slide', { 'is-active': i === 0 }]}>
-            <Picture
+            <Image
               src={img}
               alt=""
-              formats={['avif', 'webp']}
-              widths={widthsFor(img, [640, 960, 1280, 1600, 2000, 2560])}
+              format={IMAGE_FORMAT}
+              widths={widthsFor(img, SIZES.hero)}
               sizes="100vw"
               loading={i === 0 ? 'eager' : 'lazy'}
               fetchpriority={i === 0 ? 'high' : undefined}

@@ -19,3 +19,9 @@ frontend:
     baseDirectory: dist
     files:
       - '**/*'
+  # Keep processed images between builds so only new or changed photos are
+  # resized. Only the image folder is kept: page content is always read
+  # fresh. To force a full rebuild, clear the cache in Amplify (see runbook).
+  cache:
+    paths:
+      - .astro-cache/assets/**/*

@@ -20,6 +20,60 @@ practice.
 A failed build never takes a site down: the last good version stays live
 until a build passes.
 
+## The rule: no Pages CMS save can fail a build
+
+From template v2026.1-rc4, anything an editor can save is either required
+in Pages CMS (`.pages.yml`) or tolerated by the template. Content problems
+never stop a build; each one is repaired or left out, with a line in the
+build log starting `[membero] WARNING` that names the page, the section and
+the fix. What the template does:
+
+| Editor saves | Result |
+| --- | --- |
+| A section with a required field blank (e.g. a call to action with no title) | Section left out |
+| A list section with every item blank (FAQ, facts, cards, gallery, contacts, tariff rows) | Blank items dropped; section left out if none remain |
+| A button with no text, or no page or address | Button left out; the rest of the section shows |
+| A menu item, footer link or button pointing at a renamed or hidden page | Link left out |
+| A link typed in body text to a page that doesn't exist | Shown as plain text, not a link |
+| A photo deleted from Media but still used | Top of page, gallery, cards: photo left out. Image sections: grey "Image missing" placeholder |
+| An unknown or misspelt choice (background, layout, top style, map zoom) | Default used |
+| A colour that isn't valid or is too light to read | That colour reset to the template default |
+| An embed from a site that isn't allowed, or a video that isn't YouTube or Vimeo | Section left out |
+| Header "over photo" with no light logo | Solid header used |
+| The home page hidden or deleted | First page shown at the home address |
+| A page with no title | Shown as "Untitled page" |
+
+Only two things still fail a build: a fault in the template code itself,
+and `check-links` finding a broken link in the generated site (which the
+rules above should now prevent). Either means a template fix, not an editor
+fix.
+
+To prove the rule after any template change, run the edge-case test
+against the demo site (it builds every section with only its required
+fields, then every section blanked or wrong, then a site with no home page):
+
+```
+cd site-template && npm pack
+cd ../site-demo && npm i --no-save ../site-template/membero-site-template-*.tgz
+node ../site-template/tests/edge-cases.mjs .
+npm ci   # put the released template back
+```
+
+## Build time and the image cache
+
+A clean build takes about 10 seconds plus Amplify's setup (about a minute
+in total; it was about 3 minutes before rc4). Photos are converted to WebP
+only (no AVIF), at 2 to 4 sizes per use (`lib/widths.mjs`), never wider than
+the original. Converted photos are kept in `.astro-cache/assets`, which
+`amplify.yml` caches between builds, so later builds only convert new
+photos.
+
+- If a photo looks wrong after being replaced with a file of the same name,
+  clear the cache: Amplify > the app > Hosting > Build settings > Clear
+  cache, then Redeploy this version.
+- The content cache is not kept, so every build reads content fresh.
+- Never commit `.astro-cache/` (it is in `.gitignore`).
+
 ## Known failure modes
 
 ### 1. A page was renamed, but links still use the old address
@@ -34,9 +88,9 @@ was then renamed in Pages CMS, and the home page button still pointed at
   left out and the build passes, with a warning such as
   `[membero] WARNING: Menu item "Member": "/memberships" isn't a page on this site`.
 - **Fix:** in Pages CMS, choose the page again for that menu item or button.
-- **Still a hard failure:** a link typed inside body text (rich text) to a
-  page that doesn't exist. `check-links` names the page and the address.
-  Fix the text, or restore the page.
+- **From rc4:** a link typed inside body text to a page that doesn't
+  exist is shown as plain text, with a `Text link` warning. Fix the text,
+  or restore the page.
 - Pages CMS lets editors rename page files, which changes the page address.
   We can't switch that off, so the template tolerates it instead.
 
@@ -55,18 +109,28 @@ used it.
   To restore: find the commit that deleted it (`git log --diff-filter=D --
   media/<file>`), then `git checkout <commit>^ -- media/<file>`, commit and push.
 - Local builds keep a content cache and can show the old error. Delete
-  `node_modules/.astro` before testing. Amplify always builds from scratch.
+  `.astro-cache` (rc3 and earlier: `node_modules/.astro`) before testing.
+  Amplify always reads content fresh.
 
 ### 3. A colour fails the readability check
 
-The build stops with `contrast ... needs 4.5:1`. This is deliberate. Set the
-colour back to the previous value (see the site.json commit history).
+rc3 and earlier: the build stopped with `contrast ... needs 4.5:1`. From
+rc4 the colour is reset to the template default with a `too light to read`
+warning, so the site looks off-brand rather than failing. Set the colour
+back to the previous value (see the site.json commit history).
 
 ### 4. An embed address isn't allowed
 
-The build stops with `is not an allowed embed`. Only Google Forms, YouTube,
-Vimeo and OpenStreetMap can be embedded. Use a link instead, or add the
-provider to `lib/embeds.mjs` in a new template version.
+rc3 and earlier: the build stopped with `is not an allowed embed`. From rc4
+the section is left out with a warning. Only Google Forms, YouTube, Vimeo
+and OpenStreetMap can be embedded. Use a link instead, or add the provider
+to `lib/embeds.mjs` in a new template version.
+
+### 5. A call to action saved with its title removed
+
+Reported by Cam (Icicles) in pilot feedback, November 2026. rc3 failed the
+build. From rc4 the title is required in Pages CMS (it won't save without
+one), and a block saved before that change is left out with a warning.
 
 ## Checking a site after a fix
 
@@ -74,3 +138,5 @@ provider to `lib/embeds.mjs` in a new template version.
 2. Open the preview, check the page that broke, and the menu.
 3. Search the build log for `[membero] WARNING`. Each line names what an
    editor needs to fix in Pages CMS.
+4. Compare a changed section with the demo site's Components page, which
+   shows every section, background and top-of-page style.

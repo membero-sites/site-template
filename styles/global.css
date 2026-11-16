@@ -710,7 +710,7 @@ figcaption {
     grid-template-columns: 1fr 1fr;
   }
 
-  .image-text.image-right picture {
+  .image-text.image-right > img {
     order: 2;
   }
 }

@@ -1,12 +1,13 @@
 ---
 // Full-width photo: one big picture across the screen between sections.
 // In a sidebar or column it shows as a normal image.
-import { Picture } from 'astro:assets';
+import { Image } from 'astro:assets';
+import { IMAGE_FORMAT, SIZES, widthsFor } from '../../lib/widths.mjs';
 const { block, inColumn } = Astro.props;
-const widths = [640, 960, 1280, 1600, 2000, 2560].filter((w) => w < block.image.width).concat([Math.min(block.image.width, 2560)]);
+const widths = widthsFor(block.image, SIZES.photo);
 ---
 
 <figure class:list={['photo', `photo-${block.height}`, { 'photo-in-column': inColumn }]}>
-  <Picture src={block.image} alt={block.alt} formats={['avif', 'webp']} widths={widths} sizes={inColumn ? '(max-width: 900px) 100vw, 700px' : '100vw'} loading="lazy" />
+  <Image src={block.image} alt={block.alt} format={IMAGE_FORMAT} widths={widths} sizes={inColumn ? '(max-width: 900px) 100vw, 700px' : '100vw'} loading="lazy" />
   {block.caption && <figcaption>{block.caption}</figcaption>}
 </figure>
