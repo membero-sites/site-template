@@ -74,6 +74,77 @@ photos.
 - The content cache is not kept, so every build reads content fresh.
 - Never commit `.astro-cache/` (it is in `.gitignore`).
 
+## Snow cam storage (paid add-on)
+
+Club cameras upload their latest image to our S3 bucket; visitors load it
+through CloudFront. The website shows it on any page with a Snow cams
+section and swaps in a fresh copy every 5 minutes without reloading.
+
+- **Bucket:** `membero-snowcams` (Sydney, ap-southeast-2). Block all public
+  access on, ACLs disabled, versioning off. One prefix per club and camera:
+  `<club>/<camera>/latest.<jpg|png>`, for example
+  `icicles/falls-creek-lodge-walkway/latest.png`.
+- **CloudFront:** one distribution for all clubs, origin = the bucket with
+  origin access control (the bucket policy allows only this distribution to
+  read). Cache policy `snowcam-60s`: minimum TTL 0, default and maximum 60
+  seconds, no headers, cookies or query strings in the cache key (the
+  website's `?v=` refresh parameter is ignored, so it can't bypass the
+  cache). Uploads also set `Cache-Control: max-age=60`.
+- **Image address for the website:**
+  `https://<distribution>.cloudfront.net/<club>/<camera>/latest.png`.
+  The address is read-only in Pages CMS; change it in the club repo's
+  `content/settings/snowcams.json`. The build adds the CloudFront host to the
+  site's Content Security Policy automatically.
+- **One IAM user per camera device**, named
+  `snowcam-<club>-<camera>`, no console access, one access key, and only this
+  inline policy (no list, read or delete):
+
+  ```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Effect": "Allow",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::membero-snowcams/<club>/<camera>/latest.png"
+    }]
+  }
+  ```
+
+- **Device upload (rclone 1.65 or later).** `~/.config/rclone/rclone.conf`:
+
+  ```ini
+  [membero]
+  type = s3
+  provider = AWS
+  access_key_id = <from the one-time link>
+  secret_access_key = <from the one-time link>
+  region = ap-southeast-2
+  ```
+
+  Leave out any `acl =` line. rclone would send an ACL header, and a
+  PutObject-only key is refused when it does. Command (run by cron on the device after
+  each capture):
+
+  ```
+  rclone copyto /path/to/image.png membero:membero-snowcams/<club>/<camera>/latest.png \
+    --s3-no-check-bucket --s3-no-head --s3-no-head-object --no-check-dest \
+    --header-upload "Cache-Control: max-age=60" --retries 1
+  ```
+
+  The device can't read the bucket, so `rclone ls` returns an access error
+  by design. Check uploads by opening the CloudFront address.
+- **Credentials** go to the club only through a one-time secret link, never
+  email, chat or the repo. To replace a leaked or lost key: IAM > the user >
+  Security credentials > create a new key, send it the same way, then
+  deactivate and delete the old one.
+- **New camera:** add a user and policy for the new prefix, send the key,
+  confirm the image loads from CloudFront, then add the camera to
+  `snowcams.json`. Nothing else changes.
+- **Camera image stale or missing:** open the CloudFront address. An old image
+  means the device has stopped uploading (club to check the device and its
+  cron job). An "Access Denied" XML page means no image has ever been
+  uploaded to that address.
+
 ## Known failure modes
 
 ### 1. A page was renamed, but links still use the old address
