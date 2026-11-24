@@ -84,14 +84,17 @@ section and swaps in a fresh copy every 5 minutes without reloading.
   access on, ACLs disabled, versioning off. One prefix per club and camera:
   `<club>/<camera>/latest.<jpg|png>`, for example
   `icicles/falls-creek-lodge-walkway/latest.png`.
-- **CloudFront:** one distribution for all clubs, origin = the bucket with
-  origin access control (the bucket policy allows only this distribution to
-  read). Cache policy `snowcam-60s`: minimum TTL 0, default and maximum 60
-  seconds, no headers, cookies or query strings in the cache key (the
-  website's `?v=` refresh parameter is ignored, so it can't bypass the
-  cache). Uploads also set `Cache-Control: max-age=60`.
+- **CloudFront:** distribution `membero-snowcams`
+  (`d23nqpso8yawd8.cloudfront.net`, free flat-rate plan), origin = the
+  bucket with origin access control (only this distribution can read it).
+  Cache policy **CachingOptimized** (custom policies need the Business
+  plan). It keeps query strings out of the cache key, so the website's
+  `?v=` refresh parameter can't bypass the cache, and it honours each
+  object's `Cache-Control`. Every upload must set
+  `Cache-Control: max-age=60` (it's in the command below); without it,
+  CloudFront keeps the image for up to a day.
 - **Image address for the website:**
-  `https://<distribution>.cloudfront.net/<club>/<camera>/latest.png`.
+  `https://d23nqpso8yawd8.cloudfront.net/<club>/<camera>/latest.png`.
   The address is read-only in Pages CMS; change it in the club repo's
   `content/settings/snowcams.json`. The build adds the CloudFront host to the
   site's Content Security Policy automatically.
