@@ -16,6 +16,9 @@ practice.
 - **Alerts:** Amplify emails you when a build finishes (Hosting > Build
   notifications). The subscription only works after you click the link in
   AWS's confirmation email.
+- **Repository ownership:** the `membero-sites` GitHub organisation is owned
+  by Membero. It was moved from the nikdow account in November 2026, as part
+  of moving all repositories from nikdow to Membero.
 
 A failed build never takes a site down: the last good version stays live
 until a build passes.
@@ -147,7 +150,19 @@ section and swaps in a fresh copy every 5 minutes without reloading.
   means the device has stopped uploading (club to check the device and its
   cron job). An "Access Denied" XML page means no image has ever been
   uploaded to that address.
+- **Upload fails with AccessDenied:** check the bucket name is exactly
+  `membero-snowcams` and the path matches the policy exactly, then check for
+  an `acl =` line in `rclone.conf`. The key only works for its one address,
+  so any other bucket or path is refused. (Icicles hit this in November 2026
+  by using `snowcam` as the bucket name.) A successful
+  `aws sts get-caller-identity` only proves the key is valid, not that the
+  path is right.
 
+### Cameras in service
+
+| Club | Camera | IAM user | Image address | Live since | Device |
+| --- | --- | --- | --- | --- | --- |
+| Icicles | Falls Creek, Lodge Walkway | `snowcam-icicles-falls-creek-lodge-walkway` | `https://d23nqpso8yawd8.cloudfront.net/icicles/falls-creek-lodge-walkway/latest.png` | 26 Nov 2026 | Club Raspberry Pi with rclone, run by Icicles IT (it@icicles.com.au). Previously the club's own Cloudflare R2 bucket, which the club is retiring |
 ## Known failure modes
 
 ### 1. A page was renamed, but links still use the old address
